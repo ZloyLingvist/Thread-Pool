@@ -5,11 +5,12 @@ extern int verbose;
 Thread_pool::Thread_pool() : function_queue(), lock(), data_condition(), accept_functions(true){}
 Thread_pool::~Thread_pool(){}
 
-void Thread_pool::push(int id,std::function<void()> func,int priority){
+void Thread_pool::push(int id,std::function<void()> func,int priority,string doing){
 	std::unique_lock<std::mutex> lock(lock);
 	task t;
 	t.id = id;
 	t.f = func;
+	t.doing = doing;
 	t.priority = priority;	
 	function_queue.push(t);
 	lock.unlock();
@@ -25,6 +26,7 @@ void Thread_pool::finish(){
 
 void Thread_pool::work(){
 	std::function<void()> func;
+	string what_i_do;
 	
 	while (true){
 		{
@@ -39,11 +41,15 @@ void Thread_pool::work(){
 			function_queue.top();
 			task d=function_queue.top();
 			func = d.f;
+			what_i_do = d.doing;
 			function_queue.pop();
 		}
 
 		if (verbose == 1){
+			std::thread::id this_id = std::this_thread::get_id();
 			srand(time(0));
+			std::cout << "Номер потока " << this_id << endl;
+			cout << what_i_do << endl;
 			func();
 			cout << "Время работы = " << clock() / 1000.0 << endl;
 		}

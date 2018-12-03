@@ -5,6 +5,7 @@
 #include <mutex>
 #include <iostream>
 #include <ctime>  
+#include <string>
 
 using namespace std;
 
@@ -12,6 +13,7 @@ struct task {
 	int id;
 	std::function<void()> f;
 	int priority;
+	string doing;
 	bool operator<(const task &other) const { return priority < other.priority; }
 };
 
@@ -24,7 +26,7 @@ class Thread_pool{
 	public:
 		Thread_pool();
 		~Thread_pool();
-		void push(int id,std::function<void()> func,int priority);
+		void push(int id,std::function<void()> func,int priority,string doing);
 		void finish();
 		void work();
 };

@@ -74,8 +74,9 @@ int main(int argc, char* argv[]){
 			value = quescap;
 		}
 
-		thread_pool.push(1, example_function1, value);
-		thread_pool.push(2, example_function2, value);
+		thread_pool.push(1, example_function1, value,"Работаю с числами в цикле\n");
+		thread_pool.push(2, example_function2, value,"Пишу в текстовый файл\n");
+		thread_pool.push(3, example_function3, value,"Умножаю матрицы\n");
 	}
 	
 	thread_pool.finish();
