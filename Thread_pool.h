@@ -11,9 +11,10 @@ using namespace std;
 
 struct task {
 	int id;
-	std::function<void()> f;
 	int priority;
-	string doing;
+	string name;
+	bool doing;
+	std::function<void()> f;
 	bool operator<(const task &other) const { return priority < other.priority; }
 };
 
@@ -26,7 +27,7 @@ class Thread_pool{
 	public:
 		Thread_pool();
 		~Thread_pool();
-		void push(int id,std::function<void()> func,int priority,string doing);
+		void push(int id,std::function<void()> func,int priority,bool doing,string name);
 		void finish();
 		void work();
 };

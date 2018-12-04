@@ -1,28 +1,57 @@
-#include <iostream>
 #include <fstream>
+#include <iostream>
 using namespace std;
 
+extern bool v;
+
 void example_function1() {
-	int res = 0;
-	while(true){
-		res = res + 100;
-		if (res % 2 == 0){
-			res = res / 2;
-		}
-		if (res > 100000){
-			break;
+	int i, j;
+	int n = 1 + rand() % 100;
+
+	double *a;
+
+	a = new double[n];
+	for (int i = 0; i < n; i++) {
+			a[i] = 1 + rand() % 100;
+	}
+
+	for (i = 0; i < n - 1; i++) {
+		for (j = 0; j < n - i - 1; j++) {
+			if (a[j] > a[j + 1]) {
+				int temp = a[j];
+				a[j] = a[j + 1];
+				a[j + 1] = temp;
+			}
 		}
 	}
 
-	std::cout << res << std::endl;
+	if (v == true) {
+		for (int i = 0; i < n; i++) {
+			cout << a[i] << " ";
+		}
+	}
+}
+
+void error_func() {
+	int delimoe = 5;
+	int delitel = 5;
+	int chastnoe = 0;
+	while (true) {
+		chastnoe = delimoe / (delitel-5);
+	}
 }
 
 void example_function2() {
 	ofstream fout("test.txt");
-	for (int i = 0; i < 200; i++) {
-		fout << "Пишу в файл" << endl; // запись строки в файл
+	for (int i = 0; i < 100; i++) {
+		fout << "Пишу в файл " << endl; // запись строки в файл
 	}
 	fout.close();
+
+	for (int i = 0; i < 100; i++) {
+		fout << "Пишу на экран" << endl; // запись строки на экран
+	}
+	
 }
 
 void example_function3() {
@@ -58,13 +87,13 @@ void example_function3() {
 		}
 	}
 	
-	for (int i = 0; i<n; i++)
-	{
-		for (int j = 0; j<n; j++)
-			cout << c[i][j] << " ";
-		cout << endl;
+	if (v == true) {
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < n; j++)
+				cout << c[i][j] << " ";
+			cout << endl;
+		}
 	}
-	
-
 }
 
