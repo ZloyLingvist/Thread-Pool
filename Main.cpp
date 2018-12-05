@@ -1,3 +1,4 @@
+п»ї#pragma once
 #include <cstdio>
 #include <string>
 #include "Thread_pool.h"
@@ -11,7 +12,7 @@ bool v = false;
 
 extern int error_id;
 
-struct AppArgs{
+struct AppArgs {
 	std::string s;
 	int w;
 	int p;
@@ -20,16 +21,16 @@ struct AppArgs{
 };
 void parseConsoleArguments(int argc, char **argv, AppArgs &args);
 
-void parseConsoleArguments(int argc, char **argv, AppArgs &args){
+void parseConsoleArguments(int argc, char **argv, AppArgs &args) {
 	const char *help_text =
-		"w -- workers <int> -- число потоков " 
-		"q -- quescap <int> -- объём очереди задач " 
-		"p -- priorities <int> -- число приоритетов задач, если 1--приоритетов нет, >1--если есть приоритет ";
-		"v -- verbose -- логирование ";
+		"w -- workers <int> -- С‡РёСЃР»Рѕ РїРѕС‚РѕРєРѕРІ "
+		"q -- quescap <int> -- РґР»РёРЅР° РѕС‡РµСЂРµРґРё "
+		"p -- priorities <int> -- РїСЂРёРѕСЂРёС‚РµС‚ ";
+		"v -- verbose --Р»РѕРіРёСЂРѕРІР°РЅРёРµ ";
 		"h -- help ";
 
 	const char *args_pattern = "w:q:p:v";
-	static struct option long_options[] ={
+	static struct option long_options[] = {
 		{ "quescap",     required_argument, 0, 'q' },
 		{ "workers",    required_argument, 0, 'w' },
 		{ "verbose",       no_argument, 0, 'v' },
@@ -38,7 +39,7 @@ void parseConsoleArguments(int argc, char **argv, AppArgs &args){
 		{ "help",          no_argument, 0, '?' },
 		{ 0, 0,                        0,  0 }
 	};
-	
+
 	int c, option_index = 0;
 	while (-1 != (c = getopt_long(argc, argv, args_pattern,
 		long_options, &option_index)))
@@ -74,7 +75,7 @@ void parseConsoleArguments(int argc, char **argv, AppArgs &args){
 		}
 	}
 	//-----------------------
-	if (optind < argc){
+	if (optind < argc) {
 		cout << "Non-option ARGV-elements: " << endl;
 		while (optind < argc)
 			cout << argv[optind++] << endl;
@@ -84,125 +85,184 @@ void parseConsoleArguments(int argc, char **argv, AppArgs &args){
 	return;
 }
 
+void example_function1() {
+	int i, j;
+	int n = 1 + rand() % 100;
+
+	double *a;
+
+	a = new double[n];
+	for (int i = 0; i < n; i++) {
+		a[i] = 1 + rand() % 100;
+	}
+
+	for (i = 0; i < n - 1; i++) {
+		for (j = 0; j < n - i - 1; j++) {
+			if (a[j] > a[j + 1]) {
+				int temp = a[j];
+				a[j] = a[j + 1];
+				a[j + 1] = temp;
+			}
+		}
+	}
+
+	//if (v == true) {
+		for (int i = 0; i < n; i++) {
+			cout << a[i] << " ";
+		}
+	//}
+}
+
+
+void error_func() {
+	throw std::invalid_argument("РћС€РёР±РєР° Р±С‹Р»Р° Р·РґРµСЃСЊ");
+}
+
+void example_function2() {
+	ofstream fout("test.txt");
+	for (int i = 0; i < 100; i++) {
+		fout << "РџРёС€Сѓ РІ С„Р°Р№Р» " << endl; // Р·Р°РїРёСЃСЊ СЃС‚СЂРѕРєРё РІ С„Р°Р№Р»
+	}
+	fout.close();
+
+	for (int i = 0; i < 100; i++) {
+		fout << "РџРёС€Сѓ РЅР° СЌРєСЂР°РЅ" << endl; // Р·Р°РїРёСЃСЊ СЃС‚СЂРѕРєРё РЅР° СЌРєСЂР°РЅ
+	}
+
+}
+
+void example_function3() {
+	int n = 1 + rand() % 20;
+
+	double **a, **b, **c;
+
+	a = new double*[n];
+	for (int i = 0; i < n; i++) {
+		a[i] = new double[n];
+		for (int j = 0; j < n; j++) {
+			a[i][j] = 1 + rand() % 20;
+		}
+	}
+
+	b = new double*[n];
+	for (int i = 0; i < n; i++) {
+		b[i] = new double[n];
+		for (int j = 0; j < n; j++) {
+			b[i][j] = 1 + rand() % 20;
+		}
+	}
+
+	c = new double*[n];
+	for (int i = 0; i<n; i++)
+	{
+		c[i] = new double[n];
+		for (int j = 0; j<n; j++)
+		{
+			c[i][j] = 0;
+			for (int k = 0; k<n; k++)
+				c[i][j] += a[i][k] * b[k][j];
+		}
+	}
+
+	if (v == true) {
+		for (int i = 0; i < n; i++)
+		{
+			for (int j = 0; j < n; j++)
+				cout << c[i][j] << " ";
+			cout << endl;
+		}
+	}
+}
+
+
+
 int main(int argc, char* argv[]) {
 	int error = 0;
 	int i = 0;
-	int amount = 50;//количество задач,которое нужно решить
+	int r = 0;
 	task t;
 	AppArgs args;
-	Thread_pool thread_pool;
-	std::vector<std::thread> vector_thread_pool;
-	std::vector<task> vector_queue;
-	vector_queue.reserve(amount);
-
+	
 	setlocale(LC_ALL, "Russian");
 
-	/* Разбор параметров командной строки */
+	/* Р Р°Р·Р±РѕСЂ РїР°СЂР°РјРµС‚СЂРѕРІ РєРѕРјР°РЅРґРЅРѕР№ СЃС‚СЂРѕРєРё */
 	parseConsoleArguments(argc, argv, args);
 
 	if (args.w == 0) {
-		args.w = std::thread::hardware_concurrency() + 1; //запускаем на максимально возможном для системы количестве потоков
+		args.w = 1;
 	}
 
-	if (args.q == 0) { //минимум 1 задача
+	if (args.q == 0) { //РјРёРЅРёРјСѓРј 1 Р·Р°РґР°С‡Р°
 		args.q = 1;
 	}
 
-	if (args.p == 0) { //по умолчанию нет приоритетов
+	if (args.p == 0) { //РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РЅРµС‚ РїСЂРёРѕСЂРёС‚РµС‚РѕРІ
 		args.p = 1;
 	}
 
 	v = args.verbose;
 
-	//// Наполняем вектор всеми задачами, которые нужно выполнить ///
-	/// Генерируем рандомно ///
-	/// Если включен приоритет, то и он генерируется рандомно ///
+	//void(*funcs[4])(void) = { example_function1, error_func,example_function2, example_function3};
+	string arr[4] = { "РЎРѕСЂС‚РёСЂРѕРІРєР° РјР°СЃСЃРёРІР°" ,"РџСЂРѕРІРµСЂРєР° РЅР° РѕС€РёР±РєСѓ","Р—Р°РїРёСЃСЊ РІ С„Р°Р№Р»" , "РЈРјРЅРѕР¶РµРЅРёРµ РјР°С‚СЂРёС†" };
+	TaskQueue queue(1);
 
-	/* Создаем одну задачу с делением на ноль */
-	//t.id = 0;
-	//t.doing = false;
-	//t.f = error_func;
-	//t.priority = 10;
-	//t.name = "Деление на нуль";
-	//vector_queue.push_back(t);
-	/* ----------------------------------------*/
-
-	for (int i = 0; i < amount; i++){
-		t.id = i;
+	for (int i = 0; i < (1 + rand()%5); i++) {
+		r = rand()%4;
+		t.name = arr[r];
+		t.f = example_function1;
 		t.doing = false;
-		int r = 1+rand() % 3;
-		
-		if (r==1){
-				t.name = "\nСортирую массив\n";
-				t.f = example_function1;
-				if (args.p > 1) {
-					t.priority = 1 + rand() % 10;
-				}
-				else {
-					t.priority = 0;
-				}
+		if (args.p > 1){
+				t.priority = 1 + rand() % 10;
+		}
+		else {
+			t.priority = 0;
 		}
 
-		if (r==2){
-				t.name= "\nПишу в текстовый файл\n";
-				t.f = example_function2;
-				if (args.p > 1) {
-					t.priority = 1 + rand() % 10;
-				}
-				else {
-					t.priority = 0;
-				}
-		}
-
-		if (r == 3){
-				t.name = "\nУмножаю матрицы\n";
-				t.f = example_function3;
-				if (args.p > 1) {
-					t.priority = 1 + rand() % 10;
-				}
-				else {
-					t.priority = 0;
-				}
-		}
-
-		vector_queue.push_back(t);
+		queue.push(t);
 	}
 
-	/* ------------ Создаем потоки ----------------*/
-	for (int i = 0; i < args.w; i++){
-		vector_thread_pool.push_back(std::thread(&Thread_pool::work, &thread_pool));
-	}
+
+	Thread_pool thread_pool(args.w);
+	thread_pool.work(queue);
+
+
+
+	/* ------------ РЎРѕР·РґР°РµРј РїРѕС‚РѕРєРё ----------------*/
+	//for (int i = 0; i < args.w; i++){
+		//vector_thread_pool.push_back(std::thread(&Thread_pool::work, &thread_pool));
+	//}
 	/*----------------------------------------------*/
 	
-	while(i<amount){
-		/* Идея такая, что отправляем в тредпул количество задач равное длине очереди*/
-		/* Если все задачи решены, дать еще столько же .. */
-		/* Но идеи как тред свободный может запросить задачу, пока его коллеги работают нет */
+	/*while(i<amount){
+		/* РРґРµСЏ С‚Р°РєР°СЏ, С‡С‚Рѕ РѕС‚РїСЂР°РІР»СЏРµРј РІ С‚СЂРµРґРїСѓР» РєРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РґР°С‡ СЂР°РІРЅРѕРµ РґР»РёРЅРµ РѕС‡РµСЂРµРґРё*/
+		/* Р•СЃР»Рё РІСЃРµ Р·Р°РґР°С‡Рё СЂРµС€РµРЅС‹, РґР°С‚СЊ РµС‰Рµ СЃС‚РѕР»СЊРєРѕ Р¶Рµ .. */
+		/* РќРѕ РёРґРµРё РєР°Рє С‚СЂРµРґ СЃРІРѕР±РѕРґРЅС‹Р№ РјРѕР¶РµС‚ Р·Р°РїСЂРѕСЃРёС‚СЊ Р·Р°РґР°С‡Сѓ, РїРѕРєР° РµРіРѕ РєРѕР»Р»РµРіРё СЂР°Р±РѕС‚Р°СЋС‚ РЅРµС‚ */
 		
-		for (int k = 0; k < args.q; k++){ 
-			try {
-				thread_pool.push(vector_queue[k].id, vector_queue[k].f, vector_queue[k].priority, vector_queue[k].doing, vector_queue[k].name);
-			} 
-			catch (...) {
-				/* Неясно, где нужно ловить исключение для задачи делить на 0 
-				/*	в самом треде или в момент добавления в очередь	*/
-				if (args.verbose == true){
-					cout << "Ошибка при добавлении" << endl;
-				}
-				vector_queue.push_back(vector_queue[i+k]);
-				vector_queue.erase(vector_queue.begin()+i+k);
-				error = error + 1;
-			}
-		}
+		//РєРёРґР°С‚СЊ Р·Р°РґР°С‡Сѓ С‘
+		//for (int k = 0; k < args.q; k++){ 
+			//try {
+				//thread_pool.push(vector_queue[k].id, vector_queue[k].f, vector_queue[k].priority, vector_queue[k].doing, vector_queue[k].name);
+			//} 
+			//catch (...) {
+				/* РќРµСЏСЃРЅРѕ, РіРґРµ РЅСѓР¶РЅРѕ Р»РѕРІРёС‚СЊ РёСЃРєР»СЋС‡РµРЅРёРµ РґР»СЏ Р·Р°РґР°С‡Рё РґРµР»РёС‚СЊ РЅР° 0 
+				/*	РІ СЃР°РјРѕРј С‚СЂРµРґРµ РёР»Рё РІ РјРѕРјРµРЅС‚ РґРѕР±Р°РІР»РµРЅРёСЏ РІ РѕС‡РµСЂРµРґСЊ	*/
+				//if (args.verbose == true){
+					//cout << "РћС€РёР±РєР° РїСЂРё РґРѕР±Р°РІР»РµРЅРёРё" << endl;
+				//}
+				//vector_queue.push_back(vector_queue[i+k]);
+				//vector_queue.erase(vector_queue.begin()+i+k);
+				//error = error + 1;
+			//}
+		//}
 
-		i = i + args.q;
-	}
+		//i = i + args.q;
+	//}
 
-	/*------------------ Закончили работу----------------------- */
-	thread_pool.finish();
-	for (unsigned int i = 0; i < vector_thread_pool.size(); i++){
-		vector_thread_pool.at(i).join();
-	}
+	/*------------------ Р—Р°РєРѕРЅС‡РёР»Рё СЂР°Р±РѕС‚Сѓ----------------------- */
+	//thread_pool.finish();
+	//for (unsigned int i = 0; i < vector_thread_pool.size(); i++){
+		//vector_thread_pool.at(i).join();
+	//}*/
 
 	return 0;
 }

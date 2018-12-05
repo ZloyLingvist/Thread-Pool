@@ -1,99 +1,72 @@
+#pragma once
 #include <fstream>
 #include <iostream>
+
 using namespace std;
 
 extern bool v;
 
-void example_function1() {
-	int i, j;
-	int n = 1 + rand() % 100;
+struct task {
+	int id;
+	int priority;
+	string name;
+	bool doing;
+	std::function<void()> f;
+	bool operator<(const task &other) const { return priority < other.priority; }
+};
 
-	double *a;
+class TaskQueue {
+private:
+	std::priority_queue<task> function_queue;
+	size_t sz;
+	int quescap;
+	std::mutex m_mtx;
+	std::condition_variable m_cond;
+public:
+	TaskQueue(int q) { quescap = q; }
 
-	a = new double[n];
-	for (int i = 0; i < n; i++) {
-			a[i] = 1 + rand() % 100;
-	}
-
-	for (i = 0; i < n - 1; i++) {
-		for (j = 0; j < n - i - 1; j++) {
-			if (a[j] > a[j + 1]) {
-				int temp = a[j];
-				a[j] = a[j + 1];
-				a[j + 1] = temp;
-			}
+	void push(task t) {
+		sz = function_queue.size();
+		if ((sz + 1) <= quescap) {
+			std::unique_lock<std::mutex> lock_(m_mtx);
+			function_queue.push(t);
+			lock_.unlock();
+			m_cond.notify_one();
+		}
+		else {
+			cout << "Не могу добавить в очередь" << endl;
 		}
 	}
 
-	if (v == true) {
-		for (int i = 0; i < n; i++) {
-			cout << a[i] << " ";
-		}
-	}
-}
-
-void error_func() {
-	int delimoe = 5;
-	int delitel = 5;
-	int chastnoe = 0;
-	while (true) {
-		chastnoe = delimoe / (delitel-5);
-	}
-}
-
-void example_function2() {
-	ofstream fout("test.txt");
-	for (int i = 0; i < 100; i++) {
-		fout << "Пишу в файл " << endl; // запись строки в файл
-	}
-	fout.close();
-
-	for (int i = 0; i < 100; i++) {
-		fout << "Пишу на экран" << endl; // запись строки на экран
-	}
-	
-}
-
-void example_function3() {
-	int n=1+rand()%20;
-	
-	double **a, **b,**c;
-	
-	a = new double*[n];
-	for (int i = 0; i < n; i++){
-		a[i] = new double[n];
-		for (int j = 0; j < n; j++){
-			a[i][j] = 1 + rand() % 20;
-		}
+	void sort() {
+		function_queue.top();
 	}
 
-	b = new double*[n];
-	for (int i = 0; i < n; i++) {
-		b[i] = new double[n];
-		for (int j = 0; j < n; j++) {
-			b[i][j] = 1 + rand() % 20;
-		}
+	void print() {
+		task d = function_queue.top();
+		std::cout << d.name << endl;
+		std::cout << d.priority << endl;
 	}
 
-	c = new double*[n];
-	for (int i = 0; i<n; i++)
-	{
-		c[i] = new double[n];
-		for (int j = 0; j<n; j++)
-		{
-			c[i][j] = 0;
-			for (int k = 0; k<n; k++)
-				c[i][j] += a[i][k] * b[k][j];
-		}
+	task give_task(){
+		task d=function_queue.top();
+		return d;
 	}
-	
-	if (v == true) {
-		for (int i = 0; i < n; i++)
-		{
-			for (int j = 0; j < n; j++)
-				cout << c[i][j] << " ";
-			cout << endl;
-		}
+
+	bool empty(){
+		bool val=function_queue.empty();
+		return val;
 	}
-}
+
+	void pop(){
+		std::unique_lock<std::mutex> lock_(m_mtx);
+		m_cond.wait(lock_, [this]() {return !function_queue.empty();
+		});
+		
+		function_queue.pop();
+	}
+
+	TaskQueue::~TaskQueue() {}
+};
+
 

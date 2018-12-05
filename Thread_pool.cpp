@@ -1,36 +1,107 @@
+#pragma once
 #include "Thread_pool.h"
+#include "TaskQueue.h"
 
 extern bool v;
 
-Thread_pool::Thread_pool() : function_queue(), lock(), data_condition(), accept_functions(true){}
-Thread_pool::~Thread_pool(){}
+Thread_pool::Thread_pool(int w) : lock(), data_condition(), accept_functions(true), vector_thread_pool(){ init(w); }
+Thread_pool::~Thread_pool() {}
 
 int error_id = 0;
-
-void Thread_pool::push(int id,std::function<void()> func,int priority,bool doing,string name){
-	std::unique_lock<std::mutex> lock(lock);
-	task t;
-	t.id = id;
-	t.f = func;
-	t.name = name;
-	t.doing = doing;
-	t.priority = priority;	
-	function_queue.push(t);
-	lock.unlock();
-	data_condition.notify_one();
-}
-
-void Thread_pool::finish(){
+ 
+void Thread_pool::finish() {
 	accept_functions = false;//fetch_and_sub
 	data_condition.notify_all();
 }
 
-void Thread_pool::work(){
+void Thread_pool::init(int w){
+	for (int i = 0; i < w; i++){
+		vector_thread_pool.emplace_back(std::thread(&Thread_pool::work, this));
+	}
+}
+
+void Thread_pool::work(TaskQueue &obj) {
 	std::function<void()> func;
 	string what_i_do;
 	int priority = 0;
 	task d;
+
+	while (true) {
+		{
+			std::unique_lock<std::mutex> lock_(lock);
+			//data_condition.wait(lock_, [this]() {
+				//return !val || !accept_functions;
+			//});
+			if (!accept_functions && obj.empty()) {
+				return;
+			}
+
+			obj.sort();
+			d = obj.give_task();
+			func = d.f;
+			what_i_do = d.name;
+			priority = d.priority;
+			obj.pop();
+		}
+
+		if (v == true) {
+			std::thread::id this_id = std::this_thread::get_id();
+			std::cout << "\nНомер потока " << this_id << endl;
+			cout << "\nПриоритет задачи: " << priority << endl;
+			cout << what_i_do << endl; //что делаю
+			srand(time(0));
+			func();
+			cout << "\nВремя работы = " << clock() / 1000.0 << endl;
+		}
+		else {
+			func();
+		}
+	}
+
+}
+
+//void Thread_pool::push(TaskQueue &obj){
+	//cout << "a + b" << endl;
+	//std::unique_lock<std::mutex> lock(lock);
+	//task t;
+	//t.id = obj.id;
+	//t.f = func;
+	//t.name = name;
+	//t.doing = doing;
+	//t.priority = priority;	
+	//function_queue.push(t);
+	//lock.unlock();
+	//data_condition.notify_one();
+//}
+
+//void Thread_pool::finish(){
+	//accept_functions = false;//fetch_and_sub
+	//data_condition.notify_all();
+//}
+
+//void Thread_pool::work(TaskQueue &obj){
 	
+	
+	
+	
+	
+	
+	
+	
+	
+	
+
+	//std::function<void()> func;
+	//string what_i_do;
+	//int priority = 0;
+	//task d;
+	
+	//d = obj.give_task();
+	//func = d.f;
+	//func();
+	
+	
+	/*auto task = task_queue.front_pop();
 	while (true){
 		{
 			std::unique_lock<std::mutex> lock_(lock);
@@ -55,11 +126,19 @@ void Thread_pool::work(){
 			cout << "\nПриоритет задачи: " << priority << endl;
 			cout << what_i_do << endl; //что делаю
 			srand(time(0));
-			func();
+			try {
+				func();
+				throw std::runtime_error{ "invalid instruction" };
+			}
+			catch (const std::exception &e) {
+				std::cerr << e.what() << std::endl;
+				//task_queu.push();
+			}
+			}
 			cout << "\nВремя работы = " << clock() / 1000.0 << endl;
 		}
 		else {
 				func();
 		}
-	}
-}
+	}*/
+//}
