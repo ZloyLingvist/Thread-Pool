@@ -10,6 +10,7 @@ extern "C" {
 
 bool v = false;
 
+
 extern int error_id;
 
 struct AppArgs {
@@ -164,14 +165,14 @@ void example_function3() {
 		}
 	}
 
-	if (v == true) {
+	//if (v == true) {
 		for (int i = 0; i < n; i++)
 		{
 			for (int j = 0; j < n; j++)
 				cout << c[i][j] << " ";
 			cout << endl;
 		}
-	}
+	//}
 }
 
 
@@ -202,14 +203,14 @@ int main(int argc, char* argv[]) {
 
 	v = args.verbose;
 
-	//void(*funcs[4])(void) = { example_function1, error_func,example_function2, example_function3};
+	void(*funcs[4])(void) = { example_function1, error_func,example_function2, example_function3};
 	string arr[4] = { "Сортировка массива" ,"Проверка на ошибку","Запись в файл" , "Умножение матриц" };
 	TaskQueue queue(1);
 
 	for (int i = 0; i < (1 + rand()%5); i++) {
 		r = rand()%4;
 		t.name = arr[r];
-		t.f = example_function1;
+		t.f = funcs[r];
 		t.doing = false;
 		if (args.p > 1){
 				t.priority = 1 + rand() % 10;
@@ -223,9 +224,7 @@ int main(int argc, char* argv[]) {
 
 
 	Thread_pool thread_pool(args.w);
-	thread_pool.work(queue);
-
-
+	thread_pool.init(args.w, queue);
 
 	/* ------------ Создаем потоки ----------------*/
 	//for (int i = 0; i < args.w; i++){
@@ -260,6 +259,8 @@ int main(int argc, char* argv[]) {
 
 	/*------------------ Закончили работу----------------------- */
 	//thread_pool.finish();
+
+
 	//for (unsigned int i = 0; i < vector_thread_pool.size(); i++){
 		//vector_thread_pool.at(i).join();
 	//}*/

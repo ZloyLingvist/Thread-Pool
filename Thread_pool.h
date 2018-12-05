@@ -18,10 +18,10 @@ class Thread_pool{
 	friend class TaskQueue;
 	public:
 		Thread_pool(int w);
-		void init(int w);
+		void init(int w, TaskQueue &obj);
 		void work(TaskQueue &obj);
 		void finish();
-		virtual Thread_pool::~Thread_pool();
+		Thread_pool::~Thread_pool();
 };
 
 

@@ -4,24 +4,34 @@
 
 extern bool v;
 
-Thread_pool::Thread_pool(int w) : lock(), data_condition(), accept_functions(true), vector_thread_pool(){ init(w); }
-Thread_pool::~Thread_pool() {}
+Thread_pool::Thread_pool(int w) : lock(), data_condition(), accept_functions(true), vector_thread_pool(){}
+Thread_pool::~Thread_pool() {
+	for (auto &t : vector_thread_pool) {
+		t.join();
+	}
+}
 
 int error_id = 0;
  
-void Thread_pool::finish() {
+void Thread_pool::finish(){
 	accept_functions = false;//fetch_and_sub
 	data_condition.notify_all();
 }
 
-void Thread_pool::init(int w){
-	for (int i = 0; i < w; i++){
-		vector_thread_pool.emplace_back(std::thread(&Thread_pool::work, this));
+void Thread_pool::init(int w, TaskQueue &obj){
+	for (int i = 0; i < 2; i++){
+		vector_thread_pool.emplace_back(std::thread(&Thread_pool::work,this, std::ref(obj)));
 	}
 }
 
-void Thread_pool::work(TaskQueue &obj) {
-	std::function<void()> func;
+void Thread_pool::work(TaskQueue &obj){
+	while (true) {
+		task d = obj.give_task();
+		std::function<void()> func = d.f;
+		func();
+	}
+}
+	/*std::function<void()> func;
 	string what_i_do;
 	int priority = 0;
 	task d;
@@ -29,9 +39,9 @@ void Thread_pool::work(TaskQueue &obj) {
 	while (true) {
 		{
 			std::unique_lock<std::mutex> lock_(lock);
-			//data_condition.wait(lock_, [this]() {
-				//return !val || !accept_functions;
-			//});
+			data_condition.wait(lock_, [this]() {
+				return 0 || !accept_functions;
+			});
 			if (!accept_functions && obj.empty()) {
 				return;
 			}
