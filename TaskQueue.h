@@ -43,7 +43,7 @@ public:
 			t.f = functions[r];
 			t.doing = false;
 			if (p > 1){
-				t.priority = 1 + rand() % 10;
+				t.priority = 1 + rand() % 100;
 			}
 			if (p==1){
 				t.priority = 0;
@@ -52,16 +52,19 @@ public:
 			if ((sz + 1) <= quescap) {
 				std::unique_lock<std::mutex> lock_(m_mtx);
 				function_queue.push(t);
-				cout << "\nДобавлена задача " << t.name << " с приоритетом " << t.priority << endl;
+				if (v == true) {
+					cout << "\nДобавлена задача " << t.name << " с приоритетом " << t.priority << endl;
+				}
 				lock_.unlock();
 				m_cond.notify_one();
+				function_queue.top();
 			}
 			else {
-				cout << "Не могу добавить в очередь задачу " << t.name << " текущий размер очереди уже равен " << sz << endl;
+				if (v == true) {
+					cout << "\nНе могу добавить в очередь задачу " << t.name << " текущий размер очереди уже равен " << sz << endl;
+				}
 			}
 		}
-
-		function_queue.top();
 	}
 
 	void push_to_end(task d){
@@ -69,12 +72,16 @@ public:
 		if ((sz + 1) <= quescap) {
 			std::unique_lock<std::mutex> lock_(m_mtx);
 			function_queue.push(t);
-			cout << "\nЗадача " << t.name << " перемещена в конец " << endl;
+			if (v == true) {
+				cout << "\nЗадача " << t.name << " перемещена в конец " << endl;
+			}
 			lock_.unlock();
 			m_cond.notify_one();
 		}
 		else {
-			cout << "Не могу добавить в очередь " << " текущий размер очереди " << sz << endl;
+			if (v == true) {
+				cout << "\nНе могу добавить в очередь " << " текущий размер очереди " << sz << endl;
+			}
 		}
 	}
 

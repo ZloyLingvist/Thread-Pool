@@ -22,8 +22,8 @@ void Thread_pool::work(TaskQueue &obj){
 	std::function<void()> func;
 	task d;
 	int error = 0;
-	int id = 0;
-	int error_id=0;
+	string name = "";
+	string error_name="";
 	std::thread::id this_id = std::this_thread::get_id();
 
 	while (true) {
@@ -45,15 +45,15 @@ void Thread_pool::work(TaskQueue &obj){
 			}
 
 			d = obj.give_task();
-			id = d.id;
-			if (error < 2 && error_id != id) {
+			name = d.name;
+			if (error < 2 && error_name != name) {
 				func = d.f;
 			}
 			else {
 				obj.pop();//удаляем плохую задачу
 				obj.add_task();//генерируем новую
 				d = obj.give_task();
-				id = d.id;
+				name = d.name;
 				func = d.f;
 				error = 0;//обнуляем счетчик ошибок
 			}
@@ -65,11 +65,16 @@ void Thread_pool::work(TaskQueue &obj){
 
 		try {
 			func();
+			if (v == true) {
+				std::cout << "\nЗадача " << d.name << " c приоритетом " << d.priority << " выполнена " << std::endl;
+			}
 		}
 		catch (const std::exception &e) {
-			std::cout << " Вызвано исключение у задачи "<<d.name << " c номером "<< d.id << std::endl;
+			if (v == true){
+				std::cout << "\nВызвано исключение у задачи " << d.name << " c приоритетом " << d.priority << std::endl;
+			}
 			obj.push_to_end(d);
-			error_id = id;
+			error_name = name;
 			error = error + 1;
 		}	
 	}

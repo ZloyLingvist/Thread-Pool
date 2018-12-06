@@ -15,23 +15,25 @@ int p = 1;
 /*------------ Задачи ---------------*/
 void example_function1() {
 	int i, j;
-	srand(time(NULL));
+	//srand(time(NULL));
 	int n = 1 +  rand()% 20;
 
 	double *a;
 
 	a = new double[n];
+	srand(time(0));
 	for (int i = 0; i < n; i++) {
 		a[i] = 1 + rand() % 100;
 	}
 
-	if (v == true) {
+	//if (v == true) {
+		/*cout << "\nЧто сортируем:" << endl;
 		for (int i = 0; i < n; i++) {
 			cout << a[i] << " ";
 		}
 
-		cout << endl;
-	}
+		cout << endl;*/
+	//}
 
 	for (i = 0; i < n - 1; i++) {
 		for (j = 0; j < n - i - 1; j++) {
@@ -43,44 +45,54 @@ void example_function1() {
 		}
 	}
 
-	if (v == true) {
+	//cout << "\nВремя работы генерации и сортировки = " << clock() / 1000.0 << endl;
+
+	/*if (v == true) {
+		cout << "\nРезультат сортировки" << endl;
 		for (int i = 0; i < n; i++) {
 			cout << a[i] << " ";
 		}
-	}
 
-	_sleep(50);
+		cout << "\n*****" << endl;
+	}*/
+
+	_sleep(200);
 }
 
 /*---- Функция ошибки ----*/
 void error_func() {
-	cout << "Ошибка была здесь" << endl;
+	cout << "\nОшибка была здесь" << endl;
 	throw std::invalid_argument("Ошибка была здесь");
 }
 
 void example_function2() {
+	//srand(time(0));
 	ofstream fout("test.txt");
-	for (int i = 0; i < 100; i++) {
-		fout << "Пишу в файл " << endl; // запись строки в файл
+	for (int i = 0; i < 300; i++) {
+		fout << "\nПишу в файл " << endl; // запись строки в файл
 	}
 	fout.close();
+	//cout << "\nВремя работы Записи в файл = " << clock() / 1000.0 << endl;
 
-	if (v == true) {
-		for (int i = 0; i < 100; i++) {
-			cout << "Пишу на экран" << endl; // запись строки на экран
+	/*if (v == true) {
+		cout << "\nПишу на экран " << endl;
+		for (int i = 0; i < 500; i++) {
+			cout << i << " "; // запись строки на экран
 		}
-	}
 
-	_sleep(30);
+		cout << endl;
+		cout << "\n-----" << endl;
+	}*/
+
+	_sleep(300);
 }
 
 void example_function3() {
-	srand(time(NULL));
 	int n = 1 + rand() % 20;
-
 	double **a, **b, **c;
 
 	a = new double*[n];
+	//srand(time(NULL));
 	for (int i = 0; i < n; i++) {
 		a[i] = new double[n];
 		for (int j = 0; j < n; j++) {
@@ -108,17 +120,22 @@ void example_function3() {
 		}
 	}
 
-	if (v == true) {
+	//cout << "\nВремя работы генерации и умножения матриц = " << clock() / 1000.0 << endl;
+	/*if (v == true) {
+	cout << "\nРезультат умножения матриц" << endl;
 	for (int i = 0; i < n; i++){
 		for (int j = 0; j < n; j++) {
 			cout << c[i][j] << " ";
 		}
 		cout << endl;
 	}
-	}
+
+	cout << "\n+++++" << " ";
+	cout << endl;
+	}*/
 
 	delete c;
-	_sleep(60);
+	_sleep(400);
 }
 
 
