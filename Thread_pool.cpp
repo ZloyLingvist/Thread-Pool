@@ -14,7 +14,7 @@ Thread_pool::~Thread_pool(){
 /*--- Закидываем в вектор треды ---*/
 void Thread_pool::init(int workers, TaskQueue &obj){
 	for (int i = 0; i < workers; i++){
-		vector_thread_pool.emplace_back(std::thread(&Thread_pool::work,this, std::ref(obj)));
+		vector_thread_pool.emplace_back(std::thread(&Thread_pool::work,this,std::ref(obj)));
 	}
 }
 
@@ -29,11 +29,7 @@ void Thread_pool::work(TaskQueue &obj){
 	while (true) {
 		{
 			std::unique_lock<std::mutex> lock_(lock);
-			
 			data_condition.wait(lock_,[this,&obj](){
-				//if (v == 1){
-					//std::this_thread::sleep_for(0.5s);
-				//}
 				return !obj.empty() || !active;
 			});
 
@@ -46,8 +42,10 @@ void Thread_pool::work(TaskQueue &obj){
 
 			d = obj.give_task();
 			name = d.name;
+
 			if (error < 2 && error_name != name) {
 				func = d.f;
+				obj.pop();
 			}
 			else {
 				obj.pop();//удаляем плохую задачу
@@ -58,7 +56,6 @@ void Thread_pool::work(TaskQueue &obj){
 				error = 0;//обнуляем счетчик ошибок
 			}
 
-			obj.pop();
 			active = false;
 			data_condition.notify_all();
 		}
@@ -71,7 +68,7 @@ void Thread_pool::work(TaskQueue &obj){
 		}
 		catch (const std::exception &e) {
 			if (v == true){
-				std::cout << "\nВызвано исключение у задачи " << d.name << " c приоритетом " << d.priority << std::endl;
+				std::cout << "\n----Вызвано исключение у задачи " << d.name << " c приоритетом " << d.priority << std::endl;
 			}
 			obj.push_to_end(d);
 			error_name = name;

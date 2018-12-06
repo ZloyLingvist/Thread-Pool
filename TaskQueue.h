@@ -41,7 +41,7 @@ public:
 			t.id = i;
 			t.name = myvec[r];
 			t.f = functions[r];
-			t.doing = false;
+			t.doing = true;
 			if (p > 1){
 				t.priority = 1 + rand() % 100;
 			}
@@ -52,12 +52,10 @@ public:
 			if ((sz + 1) <= quescap) {
 				std::unique_lock<std::mutex> lock_(m_mtx);
 				function_queue.push(t);
+				m_cond.notify_one();
 				if (v == true) {
 					cout << "\nДобавлена задача " << t.name << " с приоритетом " << t.priority << endl;
 				}
-				lock_.unlock();
-				m_cond.notify_one();
-				function_queue.top();
 			}
 			else {
 				if (v == true) {
@@ -65,6 +63,9 @@ public:
 				}
 			}
 		}
+
+		function_queue.top();
+		_sleep(200);
 	}
 
 	void push_to_end(task d){
@@ -111,7 +112,9 @@ public:
 	}
 
 	void pop(){
+		std::unique_lock<std::mutex> lock_(m_mtx);
 		function_queue.pop();
+		m_cond.notify_one();
 	}
 
 	TaskQueue::~TaskQueue() {}
