@@ -3,15 +3,125 @@
 #include <string>
 #include "Thread_pool.h"
 #include "TaskQueue.h"
+#include <time.h>
 #pragma comment ( lib, "getopt.lib" )
 extern "C" {
 #include "getopt.h"   /* for getopt_long function */
 }
 
 bool v = false;
+int p = 1;
+
+/*------------ Задачи ---------------*/
+void example_function1() {
+	int i, j;
+	srand(time(NULL));
+	int n = 1 +  rand()% 20;
+
+	double *a;
+
+	a = new double[n];
+	for (int i = 0; i < n; i++) {
+		a[i] = 1 + rand() % 100;
+	}
+
+	if (v == true) {
+		for (int i = 0; i < n; i++) {
+			cout << a[i] << " ";
+		}
+
+		cout << endl;
+	}
+
+	for (i = 0; i < n - 1; i++) {
+		for (j = 0; j < n - i - 1; j++) {
+			if (a[j] > a[j + 1]) {
+				int temp = a[j];
+				a[j] = a[j + 1];
+				a[j + 1] = temp;
+			}
+		}
+	}
+
+	if (v == true) {
+		for (int i = 0; i < n; i++) {
+			cout << a[i] << " ";
+		}
+	}
+
+	_sleep(50);
+}
+
+/*---- Функция ошибки ----*/
+void error_func() {
+	cout << "Ошибка была здесь" << endl;
+	throw std::invalid_argument("Ошибка была здесь");
+}
+
+void example_function2() {
+	ofstream fout("test.txt");
+	for (int i = 0; i < 100; i++) {
+		fout << "Пишу в файл " << endl; // запись строки в файл
+	}
+	fout.close();
+
+	if (v == true) {
+		for (int i = 0; i < 100; i++) {
+			cout << "Пишу на экран" << endl; // запись строки на экран
+		}
+	}
+
+	_sleep(30);
+}
+
+void example_function3() {
+	srand(time(NULL));
+	int n = 1 + rand() % 20;
+
+	double **a, **b, **c;
+
+	a = new double*[n];
+	for (int i = 0; i < n; i++) {
+		a[i] = new double[n];
+		for (int j = 0; j < n; j++) {
+			a[i][j] = 1 + rand() % 10;
+		}
+	}
+
+	b = new double*[n];
+	for (int i = 0; i < n; i++) {
+		b[i] = new double[n];
+		for (int j = 0; j < n; j++) {
+			b[i][j] = 1 + rand() % 10;
+		}
+	}
+
+	c = new double*[n];
+	for (int i = 0; i<n; i++)
+	{
+		c[i] = new double[n];
+		for (int j = 0; j<n; j++)
+		{
+			c[i][j] = 0;
+			for (int k = 0; k<n; k++)
+				c[i][j] += a[i][k] * b[k][j];
+		}
+	}
+
+	if (v == true) {
+	for (int i = 0; i < n; i++){
+		for (int j = 0; j < n; j++) {
+			cout << c[i][j] << " ";
+		}
+		cout << endl;
+	}
+	}
+
+	delete c;
+	_sleep(60);
+}
 
 
-extern int error_id;
 
 struct AppArgs {
 	std::string s;
@@ -86,184 +196,36 @@ void parseConsoleArguments(int argc, char **argv, AppArgs &args) {
 	return;
 }
 
-void example_function1() {
-	int i, j;
-	int n = 1 + rand() % 100;
-
-	double *a;
-
-	a = new double[n];
-	for (int i = 0; i < n; i++) {
-		a[i] = 1 + rand() % 100;
-	}
-
-	for (i = 0; i < n - 1; i++) {
-		for (j = 0; j < n - i - 1; j++) {
-			if (a[j] > a[j + 1]) {
-				int temp = a[j];
-				a[j] = a[j + 1];
-				a[j + 1] = temp;
-			}
-		}
-	}
-
-	//if (v == true) {
-		for (int i = 0; i < n; i++) {
-			cout << a[i] << " ";
-		}
-	//}
-}
-
-
-void error_func() {
-	throw std::invalid_argument("Ошибка была здесь");
-}
-
-void example_function2() {
-	ofstream fout("test.txt");
-	for (int i = 0; i < 100; i++) {
-		fout << "Пишу в файл " << endl; // запись строки в файл
-	}
-	fout.close();
-
-	for (int i = 0; i < 100; i++) {
-		fout << "Пишу на экран" << endl; // запись строки на экран
-	}
-
-}
-
-void example_function3() {
-	int n = 1 + rand() % 20;
-
-	double **a, **b, **c;
-
-	a = new double*[n];
-	for (int i = 0; i < n; i++) {
-		a[i] = new double[n];
-		for (int j = 0; j < n; j++) {
-			a[i][j] = 1 + rand() % 20;
-		}
-	}
-
-	b = new double*[n];
-	for (int i = 0; i < n; i++) {
-		b[i] = new double[n];
-		for (int j = 0; j < n; j++) {
-			b[i][j] = 1 + rand() % 20;
-		}
-	}
-
-	c = new double*[n];
-	for (int i = 0; i<n; i++)
-	{
-		c[i] = new double[n];
-		for (int j = 0; j<n; j++)
-		{
-			c[i][j] = 0;
-			for (int k = 0; k<n; k++)
-				c[i][j] += a[i][k] * b[k][j];
-		}
-	}
-
-	//if (v == true) {
-		for (int i = 0; i < n; i++)
-		{
-			for (int j = 0; j < n; j++)
-				cout << c[i][j] << " ";
-			cout << endl;
-		}
-	//}
-}
 
 
 
 int main(int argc, char* argv[]) {
-	int error = 0;
-	int i = 0;
-	int r = 0;
-	task t;
 	AppArgs args;
-	
 	setlocale(LC_ALL, "Russian");
 
 	/* Разбор параметров командной строки */
 	parseConsoleArguments(argc, argv, args);
 
-	if (args.w == 0) {
+	if (args.w == 0){
 		args.w = 1;
 	}
 
-	if (args.q == 0) { //минимум 1 задача
+	if (args.q == 0){ //минимум 1 задача
 		args.q = 1;
 	}
 
-	if (args.p == 0) { //по умолчанию нет приоритетов
+	if (args.p == 0){ //по умолчанию нет приоритетов
 		args.p = 1;
 	}
 
 	v = args.verbose;
-
-	void(*funcs[4])(void) = { example_function1, error_func,example_function2, example_function3};
-	string arr[4] = { "Сортировка массива" ,"Проверка на ошибку","Запись в файл" , "Умножение матриц" };
-	TaskQueue queue(1);
-
-	for (int i = 0; i < (1 + rand()%5); i++) {
-		r = rand()%4;
-		t.name = arr[r];
-		t.f = funcs[r];
-		t.doing = false;
-		if (args.p > 1){
-				t.priority = 1 + rand() % 10;
-		}
-		else {
-			t.priority = 0;
-		}
-
-		queue.push(t);
-	}
-
-
+	p = args.p;
+	vector<string> arr = { "Сортировка массива" ,"Проверка на ошибку","Запись в файл" , "Умножение матриц" };
+	vector<std::function<void()>> functions={ example_function1, error_func,example_function2, example_function3 };
+	
+	TaskQueue queue(args.q,arr,functions);
+	queue.add_task();
 	Thread_pool thread_pool(args.w);
 	thread_pool.init(args.w, queue);
-
-	/* ------------ Создаем потоки ----------------*/
-	//for (int i = 0; i < args.w; i++){
-		//vector_thread_pool.push_back(std::thread(&Thread_pool::work, &thread_pool));
-	//}
-	/*----------------------------------------------*/
-	
-	/*while(i<amount){
-		/* Идея такая, что отправляем в тредпул количество задач равное длине очереди*/
-		/* Если все задачи решены, дать еще столько же .. */
-		/* Но идеи как тред свободный может запросить задачу, пока его коллеги работают нет */
-		
-		//кидать задачу ё
-		//for (int k = 0; k < args.q; k++){ 
-			//try {
-				//thread_pool.push(vector_queue[k].id, vector_queue[k].f, vector_queue[k].priority, vector_queue[k].doing, vector_queue[k].name);
-			//} 
-			//catch (...) {
-				/* Неясно, где нужно ловить исключение для задачи делить на 0 
-				/*	в самом треде или в момент добавления в очередь	*/
-				//if (args.verbose == true){
-					//cout << "Ошибка при добавлении" << endl;
-				//}
-				//vector_queue.push_back(vector_queue[i+k]);
-				//vector_queue.erase(vector_queue.begin()+i+k);
-				//error = error + 1;
-			//}
-		//}
-
-		//i = i + args.q;
-	//}
-
-	/*------------------ Закончили работу----------------------- */
-	//thread_pool.finish();
-
-
-	//for (unsigned int i = 0; i < vector_thread_pool.size(); i++){
-		//vector_thread_pool.at(i).join();
-	//}*/
-
 	return 0;
 }

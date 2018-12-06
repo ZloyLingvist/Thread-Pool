@@ -13,14 +13,14 @@ class Thread_pool{
 	private:
 		std::mutex lock;
 		std::condition_variable data_condition;
-		std::atomic<bool> accept_functions;
+		std::atomic<bool> active;
 		std::vector<std::thread> vector_thread_pool;
+		int workers = 0;
 	friend class TaskQueue;
 	public:
 		Thread_pool(int w);
-		void init(int w, TaskQueue &obj);
+		void init(int workers, TaskQueue &obj);
 		void work(TaskQueue &obj);
-		void finish();
 		Thread_pool::~Thread_pool();
 };
 
