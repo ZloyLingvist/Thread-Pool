@@ -61,14 +61,13 @@ void example_function1() {
 
 /*---- Функция ошибки ----*/
 void error_func() {
-	cout << "\nОшибка была здесь" << endl;
 	throw std::invalid_argument("Ошибка была здесь");
 }
 
 void example_function2() {
 	//srand(time(0));
 	ofstream fout("test.txt");
-	for (int i = 0; i < 300; i++) {
+	for (int i = 0; i < 500; i++) {
 		fout << "\nПишу в файл " << endl; // запись строки в файл
 	}
 	fout.close();
@@ -241,7 +240,9 @@ int main(int argc, char* argv[]) {
 	vector<std::function<void()>> functions={ example_function1, error_func,example_function2, example_function3 };
 	
 	TaskQueue queue(args.q,arr,functions);
-	queue.add_task();
+	std::thread::id main_thread_id = std::this_thread::get_id();
+	queue.add_task(main_thread_id);
+	
 	Thread_pool thread_pool(args.w);
 	thread_pool.init(args.w, queue);
 	return 0;

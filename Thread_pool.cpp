@@ -25,7 +25,7 @@ void Thread_pool::work(TaskQueue &obj){
 	string name = "";
 	string error_name="";
 	std::thread::id this_id = std::this_thread::get_id();
-
+	
 	while (true) {
 		{
 			std::unique_lock<std::mutex> lock_(lock);
@@ -35,7 +35,7 @@ void Thread_pool::work(TaskQueue &obj){
 
 			if (!active && obj.empty()) {
 				obj.print(1, this_id);
-				obj.add_task();
+				obj.add_task(this_id);
 				error = 0;
 				obj.print(4, this_id);
 			}
@@ -49,7 +49,11 @@ void Thread_pool::work(TaskQueue &obj){
 			}
 			else {
 				obj.pop();//удаляем плохую задачу
-				obj.add_task();//генерируем новую
+				//if (v == true) {
+					cout.width(10);
+					cout << " Задача " + d.id <<  + " удалена " << this_id <<  endl;
+				//}
+				obj.add_task(this_id);//генерируем новую
 				d = obj.give_task();
 				name = d.name;
 				func = d.f;
@@ -58,19 +62,27 @@ void Thread_pool::work(TaskQueue &obj){
 
 			active = false;
 			data_condition.notify_all();
+			srand(time(NULL));
+			if (v==1){
+				cout.width(10);
+				cout << this_id <<" Отправляем в сон " << endl;
+			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(100*(rand()%10)));
 		}
 
 		try {
 			func();
 			if (v == true) {
-				std::cout << "\nЗадача " << d.name << " c приоритетом " << d.priority << " выполнена " << std::endl;
+				cout.width(10);
+				std::cout << this_id << " Задача " << d.id << " c приоритетом " << d.priority << " выполнена " << std::endl;
 			}
 		}
 		catch (const std::exception &e) {
-			if (v == true){
-				std::cout << "\n----Вызвано исключение у задачи " << d.name << " c приоритетом " << d.priority << std::endl;
-			}
-			obj.push_to_end(d);
+			//if (v == true){
+				cout.width(10);
+				std::cout << this_id << " Вызвано исключение у задачи " << d.id << " c приоритетом " << d.priority <<  std::endl;
+			//}
+			obj.push_to_end(d,this_id);
 			error_name = name;
 			error = error + 1;
 		}	
