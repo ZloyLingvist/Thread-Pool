@@ -3,6 +3,7 @@
 #include <string>
 #include "Thread_pool.h"
 #include "TaskQueue.h"
+#include "archive.h"
 #include <time.h>
 #pragma comment ( lib, "getopt.lib" )
 extern "C" {
@@ -13,6 +14,38 @@ bool v = false;
 int p = 1;
 
 /*------------ Задачи ---------------*/
+int archive_test() {
+	/* создали архив */
+	cout << "Make archive" << endl;
+	Tar tar("archive.tar");
+	ifstream inFile;
+	ofstream outFile;
+	inFile.open("r.txt");
+	outFile.open("t.txt");
+	RLECompression* compression = new RLECompression(0, inFile, outFile);
+	inFile.close();
+	outFile.close();
+	tar.add_to_archive("t.txt", "ct.txt");
+	remove("t.txt");
+	tar.close();
+	tar.extract(string("archive.tar"));
+	inFile.open("ct.txt");
+	outFile.open("res.txt");
+	RLECompression* compression2 = new RLECompression(1, inFile, outFile);
+	inFile.close();
+	outFile.close();
+
+	if (isFilesEqual("r.txt", "res.txt") == true) {
+		cout << "equivalent";
+	}
+	else {
+		cout << "not equivalent" << endl;
+	}
+
+	system("pause");
+	return 0;
+}
+
 void example_function1() {
 	int i, j;
 	//srand(time(NULL));
@@ -236,14 +269,15 @@ int main(int argc, char* argv[]) {
 
 	v = args.verbose;
 	p = args.p;
-	vector<string> arr = { "Сортировка массива" ,"Проверка на ошибку","Запись в файл" , "Умножение матриц" };
-	vector<std::function<void()>> functions={ example_function1, error_func,example_function2, example_function3 };
+	/*vector<string> arr = { "Сортировка массива" ,"Проверка на ошибку","Запись в файл" , "Умножение матриц","Архиватор"};
+	vector<std::function<void()>> functions={ example_function1, error_func,example_function2, example_function3,archive_test};
 	
 	TaskQueue queue(args.q,arr,functions);
 	std::thread::id main_thread_id = std::this_thread::get_id();
 	queue.add_task(main_thread_id);
 	
 	Thread_pool thread_pool(args.w);
-	thread_pool.init(args.w, queue);
+	thread_pool.init(args.w, queue);*/
+	archive_test();
 	return 0;
 }
