@@ -1,17 +1,8 @@
-#ifndef TARBALLLIB_H_
-#define TARBALLLIB_H_
-
 #define _CRT_SECURE_NO_WARNINGS
-
-#ifndef EXIT_SUCCESS
-#define EXIT_SUCCESS 0
-#endif
-
 #define TAR_BUFFER_SIZE 5120
 
 #include <cstdio>
 #include <cstring>
-#include <cerrno>
 #include <ctime>
 #include <iostream>
 #include <fstream>
@@ -19,33 +10,57 @@
 
 using namespace std;
 
+//Описание формата https://en.wikipedia.org/wiki/Tar_(computing)
+//----------- Tar --------------------
+//Field offset 	Field size 	Field
+//0 	100 	File name
+//100 	8 	File mode
+//108 	8 	Owner's numeric user ID
+//116 	8 	Group's numeric user ID
+//124 	12 	File size in bytes(octal base)
+//136 	12 	Last modification time in numeric Unix time format(octal)
+//148 	8 	Checksum for header record
+//156 	1 	Link indicator(file type)
+//157 	100 	Name of linked file
+
+//--------USTAR--------
+//0 	156 	(several fields, same as in old format)
+//156 	1 	Type flag
+//157 	100 	(same field as in old format)
+//257 	6 	UStar indicator "ustar" then NUL
+//263 	2 	UStar version "00"
+//265 	32 	Owner user name
+//297 	32 	Owner group name
+//329 	8 	Device major number
+//337 	8 	Device minor number
+//345 	155 	Filename prefix
+
 struct tarheader {
-	char name[100];
-	char mode[8];
-	char uid[8];
-	char gid[8];
-	char size[12];
-	char mtime[12];
+	char filename[100];
+	char filemode[8];
+	char userid[8];
+	char groupid[8];
+	char filesize[12];
+	char modiftime[12];
 	char checksum[8];
-	char typeflag[1];
+	char filetype[1];
 	char linkname[100];
-	char magic[6];
+
+	char indicator[6];
 	char version[2];
-	char uname[32];
-	char gname[32];
-	char devmajor[8];
-	char devminor[8];
+	char username[32];
+	char groupname[32];
+	char majornumber[8];
+	char minornumber[8];
 	char prefix[155];
 	char pad[12];
 };
 
 class Tar {
 protected:
+	std::FILE* out;
 	bool _finished;
 	bool _closeFile;
-
-protected:
-	std::FILE* out;
 	void _init(void* header);
 	void _checksum(void* header);
 	void _size(void* header, unsigned long fileSize);
@@ -54,29 +69,19 @@ protected:
 	long int fileLength(std::FILE *file);
 private:
 	ifstream inputStream;
-	vector<tarheader> tarVector;  /// храним tar header
-	int usBlockSize;
-	int fileNum;  
-	int hex2Dec(const char*, int); 
+
 
 public:
-	Tar(const char *filename,int mode);
+	Tar(const char *filename);
 	virtual ~Tar();
 	void close();
-	void put(const char* filename, const std::string& s);
-	void put(const char* filename, const char* content);
-	void put(const char* filename, const char* content, std::size_t len);
+	void add_to_empty(const char* filename, const char* content);
+	void add_to_archive(const char* filename, const char* nameInArchive);
 
-	void putFile(const char* filename, const char* nameInArchive);
-	void showContent(const char *file);  //содержимое архива
-	int getFileNum(); /// количество файлов в архиве
-	bool nextHeader(ifstream& inputFile, int nextHeaderBlock, int lengthOfFile, int position);
+	bool nextHeader(ifstream& inputFile, int nextHeaderBlock, int lengthOfFile, int position);//перейти к следующему заголовку
 	tarheader readHeader(ifstream& inputFile, int nextHeaderBlock, int position);
 	int convertSizeToInt(char size[12]);
 	void writeBody(ifstream& inputFile, tarheader& header);
-	int extract();//извлечение
+	int extract(string& tarFileName);//извлечение
 };
 
-
-
-#endif /* TARBALLLIB_H_ */

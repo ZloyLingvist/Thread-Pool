@@ -1,11 +1,9 @@
-#include "tar.h"
-#include <iostream>
-#define TARHEADER static_cast<tarheader*>(header)
+#pragma once
+#include "archive.h"
 
-Tar::Tar(const char *filename,int mode) : _finished(false) {
-	if (mode == 1) {
+Tar::Tar(const char *filename) : _finished(false) {
 		this->out = std::fopen(filename, "wb");
-		if (out == NULL) {
+		if (out == NULL){
 			throw("Cannot open output");
 		}
 		this->_closeFile = true;
@@ -13,16 +11,6 @@ Tar::Tar(const char *filename,int mode) : _finished(false) {
 		if (sizeof(tarheader) != 512) {
 			throw(sizeof(tarheader));
 		}
-	}
-
-	if (mode == 2) {
-		this->usBlockSize = 512;
-		this->fileNum = -1;
-		this->inputStream.open(filename, ifstream::in | ifstream::binary);
-		this->inputStream.seekg(0, ios::beg);
-		this->_closeFile = true;
-		this->_finished = true;
-	}
 }
 
 Tar::~Tar() {
@@ -33,36 +21,41 @@ Tar::~Tar() {
 
 void Tar::_init(void* header) {
 	std::memset(header, 0, sizeof(tarheader));
-	std::sprintf(TARHEADER->magic, "ustar  ");
-	std::sprintf(TARHEADER->mtime, "%011lo", time(NULL));
-	std::sprintf(TARHEADER->mode, "%07o", 0777);
-	std::sprintf(TARHEADER->gid, "%s", "users");
+	std::sprintf(static_cast<tarheader*>(header)->indicator, "ustar  ");
+	std::sprintf(static_cast<tarheader*>(header)->modiftime, "%011lo", time(NULL));
+	std::sprintf(static_cast<tarheader*>(header)->filemode, "%07o", 0777);
+	std::sprintf(static_cast<tarheader*>(header)->groupid, "%s", "users");
 }
 
 void Tar::_checksum(void* header) {
 	unsigned int sum = 0;
 	char *p = (char *)header;
 	char *q = p + sizeof(tarheader);
-	while (p < TARHEADER->checksum) sum += *p++ & 0xff;
-	for (int i = 0; i < 8; ++i) {
+	while (p < static_cast<tarheader*>(header)->checksum){
+		sum += *p++ & 0xff;
+	}
+	
+	for (int i = 0; i < 8; ++i){
 		sum += ' ';
 		++p;
 	}
-	while (p < q) sum += *p++ & 0xff;
 
-	std::sprintf(TARHEADER->checksum, "%06o", sum);
+	while (p < q){
+		sum += *p++ & 0xff;
+	}
+
+	std::sprintf(static_cast<tarheader*>(header)->checksum, "%06o", sum);
 }
 
 void Tar::_size(void* header, unsigned long fileSize) {
-	std::sprintf(TARHEADER->size, "%011llo", (long long unsigned int)fileSize);
+	std::sprintf(static_cast<tarheader*>(header)->filesize, "%011llo", (long long unsigned int)fileSize);
 }
 
 void Tar::_filename(void* header, const char* filename) {
 	if (filename == NULL || filename[0] == 0 || std::strlen(filename) >= 100) {
-		//throw("invalid archive name \"" << filename << "\"");
 		throw(20);
 	}
-	sprintf(TARHEADER->name, "%s", filename); // max 100 chars !!!
+	sprintf(static_cast<tarheader*>(header)->filename, "%s", filename); // max 100 chars !!!
 }
 
 void Tar::_endRecord(std::size_t len) {
@@ -84,30 +77,23 @@ void Tar::close() {
 	if (this->_closeFile) std::fclose(this->out);
 }
 
-void Tar::put(const char* filename, const std::string& s) {
-	put(filename, s.c_str(), s.size());
-}
 
-void Tar::put(const char* filename, const char* content) {
-	put(filename, content, std::strlen(content));
-}
-
-void Tar::put(const char* filename, const char* content, std::size_t len) {
+void Tar::add_to_empty(const char* filename, const char* content) {
 	tarheader header;
 	_init((void*)&header);
 	_filename((void*)&header, filename);
-	header.typeflag[0] = 48;
-	_size((void*)&header, len);
+	header.filetype[0] = 48;
+	_size((void*)&header, std::strlen(content));
 	_checksum((void*)&header);
 	std::fwrite((const char*)&header, sizeof(char), sizeof(tarheader), out);
-	std::fwrite(content, sizeof(char), len, out);
-	_endRecord(len);
+	std::fwrite(content, sizeof(char), std::strlen(content), out);
+	_endRecord(std::strlen(content));
 }
 
-void Tar::putFile(const char* filename, const char* nameInArchive) {
+
+void Tar::add_to_archive(const char* filename, const char* nameInArchive) {
 	std::FILE* in = std::fopen(filename, "rb");
 	if (in == NULL) {
-		//throw("Cannot open " << filename << " "<< std::strerror(errno));
 		throw(10);
 	}
 
@@ -118,7 +104,7 @@ void Tar::putFile(const char* filename, const char* nameInArchive) {
 	tarheader header;
 	_init((void*)&header);
 	_filename((void*)&header, nameInArchive);
-	header.typeflag[0] = 0;
+	header.filetype[0] = 0;
 	_size((void*)&header, len);
 	_checksum((void*)&header);
 	std::fwrite((const char*)&header, sizeof(char), sizeof(tarheader), out);
@@ -130,8 +116,8 @@ void Tar::putFile(const char* filename, const char* nameInArchive) {
 		std::fwrite(buff, sizeof(char), nRead, out);
 		total = total + nRead;
 	}
-	std::fclose(in);
 
+	std::fclose(in);
 	_endRecord(total);
 }
 
@@ -142,61 +128,7 @@ long int Tar::fileLength(std::FILE *file) {
 	return len;
 }
 
-void Tar::showContent(const char *file) {
-	while (this->inputStream) {
-		struct tarheader buffer;
-		if (this->inputStream.read((char*)&buffer, this->usBlockSize)) {
-			this->tarVector.push_back(buffer);
-			int fileSize = this->hex2Dec(buffer.size, sizeof(buffer.size));
-			int jumpBlock = ceil((double)fileSize / (double)this->usBlockSize);
-			this->inputStream.seekg(jumpBlock * this->usBlockSize, ios::cur);
-		}
-	}
-
-	cout << "Total " << this->getFileNum() << " " << (this->getFileNum() > 1 ? "files." : "file.") << endl;
-	for (int i = 0; i < this->getFileNum(); i++) {
-		struct tarheader buffer = this->tarVector.at(i);
-		cout << left << buffer.name << endl;
-	}
-	this->inputStream.close();
-}
-
-int Tar::getFileNum() {
-	if (this->fileNum >= 0) {
-		return this->fileNum;
-	}
-
-	for (int i = this->tarVector.size() - 1; i > -1; i--) {
-		bool zeroFlag = true;
-		struct tarheader buffer = this->tarVector.at(i);
-
-		for (int j = 0; j < (int)sizeof(buffer.checksum); j++) {
-			if (buffer.checksum[j] != 0x00) {
-				zeroFlag = false;
-				break;
-			}
-		}
-
-		if (!zeroFlag) {
-			this->fileNum = i + 1;
-			break;
-		}
-	}
-
-	return this->fileNum;
-}
-
-int Tar::hex2Dec(const char* sizeArray, int length) {
-	int n = 0;
-	int ans = 0;
-	for (int i = length - 2; i > -1; i--) {
-		int num = sizeArray[i] >= 'a' && sizeArray[i] <= 'f' ? sizeArray[i] - 'a' + 10 : sizeArray[i] - '0';
-		ans += num * pow(16, n);
-		++n;
-	}
-	return ans /= 8;
-}
-
+///проверяем есть ли еще заголовок для чтения
 bool Tar::nextHeader(ifstream& inputFile, int nextHeaderBlock, int lengthOfFile, int position) {
 	position += (nextHeaderBlock * 512);
 	if (position < lengthOfFile)
@@ -205,8 +137,10 @@ bool Tar::nextHeader(ifstream& inputFile, int nextHeaderBlock, int lengthOfFile,
 	if (inputFile.eof())
 		return false;
 	
+	//перейти к следующему заголовку
 	inputFile.seekg((nextHeaderBlock * 512));
 
+	//проверяем содержимое следующего заголовка
 	if (inputFile.peek() == '\0' && inputFile.good())
 		return false;
 
@@ -230,8 +164,8 @@ int Tar::convertSizeToInt(char size[12]) {
 
 void Tar::writeBody(ifstream& inputFile, tarheader& header) {
 	ofstream outFile;
-	int size = convertSizeToInt(header.size);
-	string name = header.name;
+	int size = convertSizeToInt(header.filesize);
+	string name = header.filename;
 	char* body = new char[size];
 	vector<char> bodyV;
 	bodyV.resize(size);
@@ -247,21 +181,21 @@ void Tar::writeBody(ifstream& inputFile, tarheader& header) {
 	std::cout << "Created File: " << name.c_str() << endl;
 }
 
-int Tar::extract() {
+int Tar::extract(string& tarFileName) {
 	ifstream inputFile;
 	int nextHeaderBlock = 0;
-	string tarFileName = "archive.tar";
 	inputFile.open(tarFileName);
+
 	inputFile.seekg(0, inputFile.end);
 	int lengthOfFile = inputFile.tellg();
 	inputFile.seekg(0, inputFile.beg);
+	
 	int position = 0;
 
 	if (inputFile.good()) {
-		do {
-			//read header
+		while (nextHeader(inputFile, nextHeaderBlock, lengthOfFile, position)){
 			tarheader header = readHeader(inputFile, nextHeaderBlock, position);
-			nextHeaderBlock += ((511 + convertSizeToInt(header.size)) / 512) + 1; 
+			nextHeaderBlock += ((511 + convertSizeToInt(header.filesize)) / 512) + 1; 
 			int checksum = strtol(header.checksum, NULL, 8);
 			for (int i = 0; i < 8; i++) {
 				header.checksum[i] = ' ';
@@ -274,8 +208,7 @@ int Tar::extract() {
 			
 			if (computedChecksum == checksum)
 				writeBody(inputFile, header);
-
-		} while (nextHeader(inputFile, nextHeaderBlock, lengthOfFile, position));
+		} ;
 
 		inputFile.close();
 		cout << "Done with extraction of " << tarFileName.c_str() << endl;
@@ -284,21 +217,35 @@ int Tar::extract() {
 		cout << "Error extracting file. Could not open source file" << endl;
 	}
 
-	system("pause");
-	return EXIT_SUCCESS;
+	return 0;
 }
 
+bool isFilesEqual(const std::string& lFilePath, const std::string& rFilePath){
+	std::ifstream lFile(lFilePath.c_str(), std::ifstream::in | std::ifstream::binary);
+	std::ifstream rFile(rFilePath.c_str(), std::ifstream::in | std::ifstream::binary);
 
-int main() {
+	if (!lFile.is_open() || !rFile.is_open())
+	{
+		return false;
+	}
 
-	/* создали архив */
-	Tar tar("archive.tar", 2);
-	//tar.put("11.txt", "Hello World 1\n");
-	//tar.putFile("44.txt", "4.txt");
-	//tar.putFile("51.txt", "5.txt");
-	//tar.close();
-	tar.showContent("archive.tar");
-	//tar.extract();
-	system("pause");
-	return EXIT_SUCCESS;
+	char *lBuffer = new char[1024]();
+	char *rBuffer = new char[1024]();
+
+	do {
+		lFile.read(lBuffer, 1024);
+		rFile.read(rBuffer, 1024);
+
+		if (std::memcmp(lBuffer, rBuffer,1024) != 0)
+		{
+			delete[] lBuffer;
+			delete[] rBuffer;
+			return false;
+		}
+	} while (lFile.good() || rFile.good());
+
+	delete[] lBuffer;
+	delete[] rBuffer;
+	return true;
 }
+
