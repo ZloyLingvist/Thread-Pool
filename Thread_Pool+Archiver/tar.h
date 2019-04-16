@@ -72,17 +72,17 @@ private:
 
 
 public:
-	Tar(const char *filename);
+	Tar(const char *filename,int mode);
 	virtual ~Tar();
 	void close();
 	void add_to_empty(const char* filename, const char* content);
 	void add_to_archive(const char* filename, const char* nameInArchive);
 
-	void Tar::untar(FILE *a, const char *name);
-	int Tar::extract(char *tarFileName);
-	int Tar::verify_checksum(const char *p);
-	FILE *Tar::create_file(char *name);
-	int Tar::is_end_of_archive(const char *p);
-	int Tar::parseoct(const char *p, size_t n);
+	void untar(FILE *a, const char *name);
+	int extract(char *tarFileName);
+	int verify_checksum(const char *p);
+	FILE *create_file(char *name);
+	int is_end_of_archive(const char *p);
+	int parseoct(const char *p, size_t n);
 };
 

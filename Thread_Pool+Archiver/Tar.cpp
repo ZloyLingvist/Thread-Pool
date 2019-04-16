@@ -1,11 +1,14 @@
 #pragma once
 #include "tar.h"
 
-Tar::Tar(const char *filename) : _finished(false) {
-	this->out = std::fopen(filename, "wb");
-	if (out == NULL) {
-		throw("Cannot open output");
+Tar::Tar(const char *filename,int mode) : _finished(false) {
+	if (mode == 0) {
+		this->out = std::fopen(filename, "wb");
+		if (out == NULL) {
+			throw("Cannot open output");
+		}
 	}
+		
 	this->_closeFile = true;
 	this->_finished = true;
 	if (sizeof(tarheader) != 512) {

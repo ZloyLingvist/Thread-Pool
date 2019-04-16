@@ -4,6 +4,9 @@
 #include <fstream>
 #include <string>
 #include  <memory>
+#include <assert.h>
+#include "zconf.h"
+#include "zlib.h"
 
 using namespace std;
 
@@ -11,7 +14,7 @@ typedef unsigned char uchar;
 typedef unsigned long ulong;
 typedef unsigned int  uint;
 
-struct bi_filå {
+struct bi_file{
 	FILE *file;
 	uchar mask;
 	int rack;
@@ -28,6 +31,7 @@ protected:
 	static constexpr size_t FIRST_CODE = 257;
 	static constexpr size_t UNUSED = -1;
 	static constexpr size_t PACIFIER_COUNT = 2047;
+	static constexpr size_t CHUNK = 16384;
 
 public:
 	char decode_stack[TABLE_SIZE];
@@ -35,14 +39,18 @@ public:
 	LZW_archiver() = default;
 	~LZW_archiver() = default;
 
-	int compress(FILE *input, std::shared_ptr<bi_filå> bfile);
-	int decompress(FILE *output, std::shared_ptr<bi_filå> bfile);
+	int compress(FILE *input, std::shared_ptr<bi_file> bfile);
+	int decompress(FILE *output, std::shared_ptr<bi_file> bfile);
 
-	std::shared_ptr<bi_filå> Open_File(char *name, const char *mode);
-	void Close_File(std::shared_ptr<bi_filå> b, int mode);
+	/* ???????????? ???????. ???? ??? */
+	int compress_zlib(FILE *source, FILE *dest, int level);
+	int decompess_zlib(FILE *source, FILE *dest);
 
-	void WriteBits(std::shared_ptr<bi_filå> bfile, ulong code, int count);
-	ulong ReadBits(std::shared_ptr<bi_filå> bfile, int bit_count);
+	std::shared_ptr<bi_file> Open_File(char *name, const char *mode);
+	void Close_File(std::shared_ptr<bi_file> b, int mode);
+
+	void WriteBits(std::shared_ptr<bi_file> bfile, ulong code, int count);
+	ulong ReadBits(std::shared_ptr<bi_file> bfile, int bit_count);
 
 	uint find_dictionary_match(int prefix_code, int character);
 	uint decode_string(uint count, uint code);

@@ -9,13 +9,19 @@
 bool v = false;
 int p = 1;
 
-bool isFilesEqual(const std::string& lFilePath, const std::string& rFilePath){
+/*!
+Копирует содержимое из исходной области памяти в целевую область память
+\param[out] dest Целевая область памяти
+\param[in] src Исходная область памяти
+\param[in] n Количество байтов, которые необходимо скопировать
+*/
+
+void isFilesEqual(const std::string& lFilePath, const std::string& rFilePath){
 	std::ifstream lFile(lFilePath.c_str(), std::ifstream::in | std::ifstream::binary);
 	std::ifstream rFile(rFilePath.c_str(), std::ifstream::in | std::ifstream::binary);
 
-	if (!lFile.is_open() || !rFile.is_open())
-	{
-		return false;
+	if (!lFile.is_open() || !rFile.is_open()){
+		cout << "Cannot open first or second file" << endl;
 	}
 
 	char *lBuffer = new char[1024]();
@@ -25,76 +31,88 @@ bool isFilesEqual(const std::string& lFilePath, const std::string& rFilePath){
 		lFile.read(lBuffer, 1024);
 		rFile.read(rBuffer, 1024);
 
-		if (std::memcmp(lBuffer, rBuffer, 1024) != 0)
-		{
+		if (std::memcmp(lBuffer, rBuffer, 1024) != 0){
 			delete[] lBuffer;
 			delete[] rBuffer;
-			return false;
+			cout << "not equivalent" << endl;
+			return;
 		}
 	}
 
 	delete[] lBuffer;
 	delete[] rBuffer;
-	return true;
+	cout << "equivalent" << endl;
 }
 
 
 /*------------ Задачи ---------------*/
-void archive_test(){
+
+void add(){
 	ifstream inFile;
 	ofstream outFile;
 	LZW_archiver obj;
 
-	char *in = "r.txt";
+	char *in = "In.txt";
 	char *out = "res.txt";
 
 	/* создали архив */
 	cout << "Make archive" << endl;
-	Tar tar("archive.tar");
-	
-	cout << "Try to compress" << endl;
-	obj.intf(in, "compress_1.txt", 1); //1-сжатие 2-расжатие
+	Tar tar("archive.tar", 0);
 
-	tar.add_to_archive(in, "ct.txt");
-	tar.add_to_archive("compress_1.txt", "p.txt");
-	remove("compress_1.txt");
+	cout << "Try to compress" << endl;
+	obj.intf(in, "compress_1.txt", 1); //1-сжатие 2-расжатие - внутреннее 3,4 библиотечное
+	obj.intf(in, "compress_1_zlib.txt", 3); 
+
+	tar.add_to_archive("compress_1.txt","compress_1.txt");
+	tar.add_to_archive("compress_1_zlib.txt", "compress_1_zlib.txt");
+
 	tar.close();
-	
+}
+
+void extract(){
+	Tar tar("archive.tar", 1);
 	cout << "Try to extract" << endl;
 	tar.extract("archive.tar");
-	
-	obj.intf("p.txt",out,2); //1-сжатие 2-расжатие
+}
 
-	cout << "Compare" << endl;
-	if (isFilesEqual(in,out) == true) {
-		cout << "equivalent" << endl;
-	}
-	else {
-		cout << "not equivalent" << endl;
-	}
+void decompress() {
+	LZW_archiver obj;
+	char *in = "In.txt";
+	char *out = "res.txt";
 
-	remove("archive.tar");
-	remove("p.txt");
+	obj.intf("compress_1.txt",out,2);
+	obj.intf("compress_1_zlib.txt","p_zlib.txt",4);
+
+	//cout << "Compare " << in << " with " << out << endl;
+	//cout << "Verdict is "; isFilesEqual(in, out);
+	cout << "Compare " << in << " with " << "p_zlib.txt" << endl;
+	cout << "Verdict is ";
+	isFilesEqual(in, "p_zlib.txt");
+
+	//remove("archive.tar");
+	remove("compress_1.txt");
+	remove("compress_1_zlib.txt");
 	remove(out);
 }
 
 
-int main(int argc, char* argv[]) {
-	setlocale(LC_ALL, "Russian");
+int main(/*int argc, char* argv[]*/) {
+	/* Разбор параметров командной строки */
 	int w = 1;
 	int q = 1;
+
+	bool v = true;
+	int p = 1;
 	
-	/*vector<string> arr = {"Архиватор в цикле"};
-	vector<std::function<void()>> functions={archive_test};
-	
-	TaskQueue queue(q,arr,functions);
+	vector<string> arr = { "Создать" ,"Извлечь","Расжать"};
+	vector<std::function<void()>> functions = { add,extract,decompress};
+
+	TaskQueue queue(q, arr, functions);
 	std::thread::id main_thread_id = std::this_thread::get_id();
 	queue.add_task(main_thread_id);
-	
-	Thread_pool thread_pool(w);
-	thread_pool.init(w, queue);*/
 
-	archive_test();
-	system("pause");
+	Thread_pool thread_pool(w);
+	thread_pool.init(w, queue);
+
 	return 0;
 }
