@@ -1,5 +1,3 @@
-# Thread-Pool
-Папка html- документация к Thread_Pool+Archiver
 # Simple Thread_Pool
 Простейшая реализация пула потоков на C++
 Для подключения библиотеки в VS зайти в: Properties/Linker/Input/Additional Dependencies добавить getopt.lib (для 32 бит файл прилагается)
