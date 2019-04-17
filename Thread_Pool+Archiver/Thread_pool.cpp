@@ -27,7 +27,7 @@ void Thread_pool::work(TaskQueue &obj){
 	std::thread::id this_id = std::this_thread::get_id();
 	
 	while (true) {
-		{
+	{
 			std::unique_lock<std::mutex> lock_(lock);
 			data_condition.wait(lock_,[this,&obj](){
 				return !obj.empty() || !active;

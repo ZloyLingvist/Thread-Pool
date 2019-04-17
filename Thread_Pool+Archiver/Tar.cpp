@@ -81,20 +81,7 @@ void Tar::close() {
 }
 
 
-void Tar::add_to_empty(const char* filename, const char* content) {
-	tarheader header;
-	_init((void*)&header);
-	_filename((void*)&header, filename);
-	header.filetype[0] = 48;
-	_size((void*)&header, std::strlen(content));
-	_checksum((void*)&header);
-	std::fwrite((const char*)&header, sizeof(char), sizeof(tarheader), out);
-	std::fwrite(content, sizeof(char), std::strlen(content), out);
-	_endRecord(std::strlen(content));
-}
-
-
-void Tar::add_to_archive(const char* filename, const char* nameInArchive) {
+void Tar::add_to_archive(const char* filename) {
 	std::FILE* in = std::fopen(filename, "rb");
 	if (in == NULL) {
 		throw(10);
@@ -106,7 +93,7 @@ void Tar::add_to_archive(const char* filename, const char* nameInArchive) {
 
 	tarheader header;
 	_init((void*)&header);
-	_filename((void*)&header, nameInArchive);
+	_filename((void*)&header, filename);
 	header.filetype[0] = 0;
 	_size((void*)&header, len);
 	_checksum((void*)&header);
@@ -237,7 +224,7 @@ void Tar::untar(FILE *a, const char *name) {
 	}
 }
 
-int Tar::extract(char *tarFileName) {
+int Tar::extract(const char *tarFileName) {
 	FILE *a;
 	a = fopen(tarFileName, "rb");
 	if (a == NULL) {

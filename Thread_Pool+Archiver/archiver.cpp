@@ -1,6 +1,7 @@
 #pragma once
 #include "archive.h"
 
+
 struct dictionary {
 	int code_value;
 	int prefix_code;
@@ -8,8 +9,8 @@ struct dictionary {
 } dict[5021];
 
 
-std::shared_ptr<bi_filе> LZW_archiver::Open_File(char *name, const char *mode) {
-	std::shared_ptr<bi_filе> b_file = std::make_shared<bi_filе>();
+std::shared_ptr<bi_file> LZW_archiver::Open_File(char *name, const char *mode) {
+	std::shared_ptr<bi_file> b_file = std::make_shared<bi_file>();
 	b_file->file = fopen(name, mode);
 	b_file->rack = 0;
 	b_file->mask = 0x80;
@@ -17,7 +18,7 @@ std::shared_ptr<bi_filе> LZW_archiver::Open_File(char *name, const char *mode) {
 	return b_file;
 }
 
-void LZW_archiver::Close_File(std::shared_ptr<bi_filе> bfile, int mode){
+void LZW_archiver::Close_File(std::shared_ptr<bi_file> bfile, int mode){
 	if (mode == 0) {
 		if (bfile->mask != 0x80) {
 			putc(bfile->rack, bfile->file);
@@ -30,7 +31,7 @@ void LZW_archiver::Close_File(std::shared_ptr<bi_filе> bfile, int mode){
 	}
 }
 
-void LZW_archiver::WriteBits(std::shared_ptr<bi_filе> bfile, ulong code, int count){
+void LZW_archiver::WriteBits(std::shared_ptr<bi_file> bfile, ulong code, int count){
 	ulong mask;
 	mask = 1L << (count - 1);
 	while (mask != 0) {
@@ -51,7 +52,7 @@ void LZW_archiver::WriteBits(std::shared_ptr<bi_filе> bfile, ulong code, int cou
 	}
 }
 
-ulong LZW_archiver::ReadBits(std::shared_ptr<bi_filе> bfile, int bit_count){
+ulong LZW_archiver::ReadBits(std::shared_ptr<bi_file> bfile, int bit_count){
 	ulong mask;
 	ulong return_value;
 	mask = 1L << (bit_count - 1);
@@ -82,7 +83,7 @@ ulong LZW_archiver::ReadBits(std::shared_ptr<bi_filе> bfile, int bit_count){
 	return return_value;
 }
 
-int LZW_archiver::compress(FILE *input, std::shared_ptr<bi_filе> bfile){
+int LZW_archiver::compress(FILE *input, std::shared_ptr<bi_file> bfile){
 	int next_code, character, string_code;
 	uint index, i;
 	next_code = FIRST_CODE;
@@ -91,20 +92,20 @@ int LZW_archiver::compress(FILE *input, std::shared_ptr<bi_filе> bfile){
 		dict[i].code_value = UNUSED;
 	}
 
-	/* Считать первый символ */
+	/* Г‘Г·ГЁГІГ ГІГј ГЇГҐГ°ГўГ»Г© Г±ГЁГ¬ГўГ®Г« */
 	if ((string_code = getc(input)) == EOF) {
 		string_code = end_of_stream;
 	}
 
-	/* Пока не конец сообщения */
+	/* ГЏГ®ГЄГ  Г­ГҐ ГЄГ®Г­ГҐГ¶ Г±Г®Г®ГЎГ№ГҐГ­ГЁГї */
 	while ((character = getc(input)) != EOF) {
-		/* Попытка найти в словаре пару <фраза, символ> */
+		/* ГЏГ®ГЇГ»ГІГЄГ  Г­Г Г©ГІГЁ Гў Г±Г«Г®ГўГ Г°ГҐ ГЇГ Г°Гі <ГґГ°Г Г§Г , Г±ГЁГ¬ГўГ®Г«> */
 		index = find_dictionary_match(string_code, character);
 		if (dict[index].code_value != -1) {
 			string_code = dict[index].code_value;
 		}
 		else {
-			/* Добавление в словарь */
+			/* Г„Г®ГЎГ ГўГ«ГҐГ­ГЁГҐ Гў Г±Г«Г®ГўГ Г°Гј */
 			if (next_code <= MAX_CODE) {
 				dict[index].code_value = next_code++;
 				dict[index].prefix_code = string_code;
@@ -116,14 +117,14 @@ int LZW_archiver::compress(FILE *input, std::shared_ptr<bi_filе> bfile){
 		}
 	}
 
-	/* Завершение кодирования */
+	/* Г‡Г ГўГҐГ°ГёГҐГ­ГЁГҐ ГЄГ®Г¤ГЁГ°Г®ГўГ Г­ГЁГї */
 	WriteBits(bfile, (ulong)string_code, BITS);
 	WriteBits(bfile, (ulong)end_of_stream, BITS);
 	return 0;
 }
 
 
-int LZW_archiver::decompress(FILE *output, std::shared_ptr<bi_filе> bfile) {
+int LZW_archiver::decompress(FILE *output, std::shared_ptr<bi_file> bfile) {
 	uint next_code, new_code, old_code;
 	int character;
 	uint count;
@@ -165,8 +166,8 @@ int LZW_archiver::decompress(FILE *output, std::shared_ptr<bi_filе> bfile) {
 	return 0;
 }
 
-//Процедура поиска в словаре указанной пары <код фразы,символ>.Для ускорения поиска используется хеш, получаемый 
-// из параметров.//
+//ГЏГ°Г®Г¶ГҐГ¤ГіГ°Г  ГЇГ®ГЁГ±ГЄГ  Гў Г±Г«Г®ГўГ Г°ГҐ ГіГЄГ Г§Г Г­Г­Г®Г© ГЇГ Г°Г» <ГЄГ®Г¤ ГґГ°Г Г§Г»,Г±ГЁГ¬ГўГ®Г«>.Г„Г«Гї ГіГ±ГЄГ®Г°ГҐГ­ГЁГї ГЇГ®ГЁГ±ГЄГ  ГЁГ±ГЇГ®Г«ГјГ§ГіГҐГІГ±Гї ГµГҐГё, ГЇГ®Г«ГіГ·Г ГҐГ¬Г»Г© 
+// ГЁГ§ ГЇГ Г°Г Г¬ГҐГІГ°Г®Гў.//
 
 uint LZW_archiver::find_dictionary_match(int prefix_code, int character){
 	int index;
@@ -174,7 +175,7 @@ uint LZW_archiver::find_dictionary_match(int prefix_code, int character){
 
 	index = (character << (BITS - 8)) ^ prefix_code;
 
-	/* Разрешение коллизий */
+	/* ГђГ Г§Г°ГҐГёГҐГ­ГЁГҐ ГЄГ®Г«Г«ГЁГ§ГЁГ© */
 	if (index == 0) {
 		offset = 1;
 	}
@@ -199,7 +200,7 @@ uint LZW_archiver::find_dictionary_match(int prefix_code, int character){
 }
 
 uint LZW_archiver::decode_string(uint count, uint code) {
-	while (code > 255) /* Пока не встретится код символа */
+	while (code > 255) /* ГЏГ®ГЄГ  Г­ГҐ ГўГ±ГІГ°ГҐГІГЁГІГ±Гї ГЄГ®Г¤ Г±ГЁГ¬ГўГ®Г«Г  */
 	{
 		decode_stack[count++] = dict[code].character;
 		code = dict[code].prefix_code;
@@ -210,7 +211,7 @@ uint LZW_archiver::decode_string(uint count, uint code) {
 }
 
 void LZW_archiver::intf(char *in,char *out,int mode){
-	std::shared_ptr<bi_filе> b_file;
+	std::shared_ptr<bi_filГҐ> b_file;
 
 	if (mode == 1){
 		FILE *input;
@@ -256,7 +257,7 @@ void LZW_archiver::intf(char *in,char *out,int mode){
 	}
 }
 
-// библиотечные функции
+// ГЎГЁГЎГ«ГЁГ®ГІГҐГ·Г­Г»ГҐ ГґГіГ­ГЄГ¶ГЁГЁ
 int LZW_archiver::compress_zlib(FILE *source, FILE *dest, int level){
 	int ret, flush;
 	unsigned have;

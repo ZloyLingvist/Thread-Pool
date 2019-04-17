@@ -1,6 +1,5 @@
-#define _CRT_SECURE_NO_WARNINGS
-#define TAR_BUFFER_SIZE 5120
-
+#pragma once
+#pragma warning(disable:4996)
 #include <cstdio>
 #include <cstring>
 #include <ctime>
@@ -67,6 +66,7 @@ protected:
 	void _filename(void* header, const char* filename);
 	void _endRecord(std::size_t len);
 	long int fileLength(std::FILE *file);
+	static constexpr size_t TAR_BUFFER_SIZE=5120;
 private:
 	ifstream inputStream;
 
@@ -75,11 +75,10 @@ public:
 	Tar(const char *filename,int mode);
 	virtual ~Tar();
 	void close();
-	void add_to_empty(const char* filename, const char* content);
-	void add_to_archive(const char* filename, const char* nameInArchive);
 
+	void add_to_archive(const char* filename);
 	void untar(FILE *a, const char *name);
-	int extract(char *tarFileName);
+	int extract(const char *tarFileName);
 	int verify_checksum(const char *p);
 	FILE *create_file(char *name);
 	int is_end_of_archive(const char *p);

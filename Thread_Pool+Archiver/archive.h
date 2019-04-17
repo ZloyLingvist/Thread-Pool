@@ -3,7 +3,7 @@
 #include <iostream>
 #include <fstream>
 #include <string>
-#include  <memory>
+#include <memory>
 #include <assert.h>
 #include "zconf.h"
 #include "zlib.h"
@@ -14,7 +14,7 @@ typedef unsigned char uchar;
 typedef unsigned long ulong;
 typedef unsigned int  uint;
 
-struct bi_file{
+struct bi_file {
 	FILE *file;
 	uchar mask;
 	int rack;
@@ -31,7 +31,7 @@ protected:
 	static constexpr size_t FIRST_CODE = 257;
 	static constexpr size_t UNUSED = -1;
 	static constexpr size_t PACIFIER_COUNT = 2047;
-	static constexpr size_t CHUNK = 16384;
+	static constexpr size_t CHUNK = 4096;
 
 public:
 	char decode_stack[TABLE_SIZE];
@@ -42,11 +42,11 @@ public:
 	int compress(FILE *input, std::shared_ptr<bi_file> bfile);
 	int decompress(FILE *output, std::shared_ptr<bi_file> bfile);
 
-	/* ???????????? ???????. ???? ??? */
+	/* пока 2 доп функции для библиотеки */
 	int compress_zlib(FILE *source, FILE *dest, int level);
 	int decompess_zlib(FILE *source, FILE *dest);
 
-	std::shared_ptr<bi_file> Open_File(char *name, const char *mode);
+	std::shared_ptr<bi_file> Open_File(const char *name, const char *mode);
 	void Close_File(std::shared_ptr<bi_file> b, int mode);
 
 	void WriteBits(std::shared_ptr<bi_file> bfile, ulong code, int count);
@@ -55,7 +55,7 @@ public:
 	uint find_dictionary_match(int prefix_code, int character);
 	uint decode_string(uint count, uint code);
 
-	void intf(char *in, char *out, int mode);
+	void intf(const char *in, const char *out, int mode);
 };
 
 
