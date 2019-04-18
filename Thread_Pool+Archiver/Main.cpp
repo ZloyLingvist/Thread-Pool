@@ -7,8 +7,8 @@
 #include "tester.h"
 #include <time.h>
 
-bool v = false;
-int p = 1;
+bool v = true;
+int p = 2;
 
 
 /*------------ Задачи ---------------*/
@@ -18,7 +18,7 @@ void add(){
 	ofstream outFile;
 	LZW_archiver obj;
 
-	char *in = "In.txt";
+	char *in = "in1.txt";
 	char *out = "res.txt";
 
 	/* создали архив */
@@ -27,27 +27,16 @@ void add(){
 
 	cout << "Try to compress" << endl;
 	obj.intf(in, "compress_1.txt", 1); //1-сжатие 2-расжатие - внутреннее 3,4 библиотечное
-	obj.intf(in, "compress_1_zlib.txt", 3); 
-
+	
 	tar.add_to_archive("compress_1.txt");
-	tar.add_to_archive("compress_1_zlib.txt");
-
 	tar.close();
 }
 
 void extract(){
-	char *name = "archiver.tar";
-	int res = 0;
-	/*if (FILE *file = fopen(name, "r")) {
-		fclose(file);
-	}
-	else {
-		throw("file is not consist");
-	}*/
-
-	Tar tar("NSV5gRnTIDKc.tar", 1);
+	char *name = "archive.tar";
+	Tar tar(name, 1);
 	cout << "Try to extract" << endl;
-	tar.extract("NSV5gRnTIDKc.tar");
+	tar.extract(name);
 }
 
 void decompress() {
@@ -55,48 +44,24 @@ void decompress() {
 	char *in = "In.txt";
 	char *out = "res.txt";
 
-	char *n1 = "O3t.txt";
-	char *n2 = "compress_1_zlib.txt";
-	
-	/*if (FILE *file = fopen(n1, "r")) {
-		fclose(file);
-	}
-	else {
-		throw("file is not consist");
-	}
-
-	if (FILE *file = fopen(n2, "r")) {
-		fclose(file);
-	}
-	else {
-		throw("file is not consist");
-	}*/
-
-	obj.intf(n1,out,4);
-	//obj.intf(n2,"p_zlib.txt",4);
-
-	//cout << "Compare " << in << " with " << out << endl;
-	//cout << "Verdict is "; isFilesEqual(in, out);
-	//cout << "Compare " << in << " with " << "p_zlib.txt" << endl;
-	//cout << "Verdict is ";
-	//isFilesEqual(in, "p_zlib.txt");
-
-	//remove("archive.tar");
-	//remove("compress_1.txt");
-	//remove("compress_1_zlib.txt");
-	//remove(out);
+	char *n1 = "compress_1.txt";
+	obj.intf(n1,out,2);
 }
 
+void write() {
+	cout << "I need for number task" << endl;
+}
 
 int main(/*int argc, char* argv[]*/) {
-	/* Разбор параметров командной строки */
-	int w = 1;
-	int q = 2;
+	setlocale(LC_ALL, "Russian");
+
+	int w = 2;
+	int q = 3;
 
 	bool v = true;
 	int p = 1;
 	
-	/*vector<string> arr = { "Создать" ,"Извлечь","Расжать"};
+	vector<string> arr = { "Создать" ,"Извлечь","Расжать","Написать"};
 	vector<std::function<void()>> functions = { add,extract,decompress,write};
 
 	TaskQueue queue(q, arr, functions);
@@ -104,12 +69,17 @@ int main(/*int argc, char* argv[]*/) {
 	queue.add_task(main_thread_id);
 
 	Thread_pool thread_pool(w);
-	thread_pool.init(w, queue);*/
+	thread_pool.init(w, queue);
 
-	cout << test_basic(2) << endl;
-	//work("myarch.tar", "24.txt", "res.txt");
 	
-	system("pause");
-
+	/*------------ Тестирование ------------ */
+	//Testing_class obj;
+	/* Генерирует имена файлов, их количество, содержимое сама программа */
+	//cout << obj.test_1(1) << endl;
+	//cout << obj.test_2(2) << endl;
+	/* Пользовательский ввод */
+	//cout << obj.user_test("myarch.tar","in1.txt", "in2.txt",2);
+	//cout << endl;
+	//system("pause");
 	return 0;
 }

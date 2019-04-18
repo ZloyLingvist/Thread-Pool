@@ -14,7 +14,7 @@ typedef unsigned char uchar;
 typedef unsigned long ulong;
 typedef unsigned int  uint;
 
-struct bi_file {
+struct bi_file{
 	FILE *file;
 	uchar mask;
 	int rack;

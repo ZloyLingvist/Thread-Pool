@@ -38,10 +38,6 @@ public:
 	vector<std::function<void()>> functions;
 	TaskQueue(int q, vector<string> vec, vector<std::function<void()>> func);
 
-	int now(){
-		return k;
-	 }
-
 	void add_task(std::thread::id this_id);
 	void push_to_end(task d, std::thread::id this_id); 
 	void print(int mode, std::thread::id this_id);

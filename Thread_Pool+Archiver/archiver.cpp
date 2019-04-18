@@ -1,7 +1,6 @@
 #pragma once
 #include "archive.h"
 
-
 struct dictionary {
 	int code_value;
 	int prefix_code;
@@ -9,7 +8,7 @@ struct dictionary {
 } dict[5021];
 
 
-std::shared_ptr<bi_file> LZW_archiver::Open_File(char *name, const char *mode) {
+std::shared_ptr<bi_file> LZW_archiver::Open_File(const char *name, const char *mode) {
 	std::shared_ptr<bi_file> b_file = std::make_shared<bi_file>();
 	b_file->file = fopen(name, mode);
 	b_file->rack = 0;
@@ -42,9 +41,6 @@ void LZW_archiver::WriteBits(std::shared_ptr<bi_file> bfile, ulong code, int cou
 		bfile->mask >>= 1;
 		if (bfile->mask == 0) {
 			putc(bfile->rack, bfile->file);
-			if ((bfile->pacifier_counter++ & PACIFIER_COUNT) == 0) {
-				putc('.', stdout);
-			}
 			bfile->rack = 0;
 			bfile->mask = 0x80;
 		}
@@ -62,10 +58,7 @@ ulong LZW_archiver::ReadBits(std::shared_ptr<bi_file> bfile, int bit_count){
 			bfile->rack = getc(bfile->file);
 			if (bfile->rack == EOF) {
 				throw("Error while readbits!\n");
-			}
-			if ((bfile->pacifier_counter++ & PACIFIER_COUNT) == 0) {
-				putc('.', stdout);
-			}
+			}	
 		}
 
 		if (bfile->rack & bfile->mask) {
@@ -92,20 +85,20 @@ int LZW_archiver::compress(FILE *input, std::shared_ptr<bi_file> bfile){
 		dict[i].code_value = UNUSED;
 	}
 
-	/* Ñ÷èòàòü ïåðâûé ñèìâîë */
+	/* ???? ??????? */
 	if ((string_code = getc(input)) == EOF) {
 		string_code = end_of_stream;
 	}
 
-	/* Ïîêà íå êîíåö ñîîáùåíèÿ */
+	/* ?? ? ??? ????? */
 	while ((character = getc(input)) != EOF) {
-		/* Ïîïûòêà íàéòè â ñëîâàðå ïàðó <ôðàçà, ñèìâîë> */
+		/* ?????????????? <??? ???> */
 		index = find_dictionary_match(string_code, character);
 		if (dict[index].code_value != -1) {
 			string_code = dict[index].code_value;
 		}
 		else {
-			/* Äîáàâëåíèå â ñëîâàðü */
+			/* ????? ????? */
 			if (next_code <= MAX_CODE) {
 				dict[index].code_value = next_code++;
 				dict[index].prefix_code = string_code;
@@ -117,7 +110,7 @@ int LZW_archiver::compress(FILE *input, std::shared_ptr<bi_file> bfile){
 		}
 	}
 
-	/* Çàâåðøåíèå êîäèðîâàíèÿ */
+	/* ????? ?????? */
 	WriteBits(bfile, (ulong)string_code, BITS);
 	WriteBits(bfile, (ulong)end_of_stream, BITS);
 	return 0;
@@ -166,8 +159,8 @@ int LZW_archiver::decompress(FILE *output, std::shared_ptr<bi_file> bfile) {
 	return 0;
 }
 
-//Ïðîöåäóðà ïîèñêà â ñëîâàðå óêàçàííîé ïàðû <êîä ôðàçû,ñèìâîë>.Äëÿ óñêîðåíèÿ ïîèñêà èñïîëüçóåòñÿ õåø, ïîëó÷àåìûé 
-// èç ïàðàìåòðîâ.//
+//???????? ???????????? <?????,???>.?? ????? ??? ?????? ??, ??????
+// ? ?????.//
 
 uint LZW_archiver::find_dictionary_match(int prefix_code, int character){
 	int index;
@@ -175,7 +168,7 @@ uint LZW_archiver::find_dictionary_match(int prefix_code, int character){
 
 	index = (character << (BITS - 8)) ^ prefix_code;
 
-	/* Ðàçðåøåíèå êîëëèçèé */
+	/* ????? ???? */
 	if (index == 0) {
 		offset = 1;
 	}
@@ -200,7 +193,7 @@ uint LZW_archiver::find_dictionary_match(int prefix_code, int character){
 }
 
 uint LZW_archiver::decode_string(uint count, uint code) {
-	while (code > 255) /* Ïîêà íå âñòðåòèòñÿ êîä ñèìâîëà */
+	while (code > 255) /* ?? ? ????? ??????*/
 	{
 		decode_stack[count++] = dict[code].character;
 		code = dict[code].prefix_code;
@@ -210,8 +203,8 @@ uint LZW_archiver::decode_string(uint count, uint code) {
 	return count;
 }
 
-void LZW_archiver::intf(char *in,char *out,int mode){
-	std::shared_ptr<bi_filå> b_file;
+void LZW_archiver::intf(const char *in,const char *out,int mode){
+	std::shared_ptr<bi_fil? b_file;
 
 	if (mode == 1){
 		FILE *input;
@@ -257,104 +250,98 @@ void LZW_archiver::intf(char *in,char *out,int mode){
 	}
 }
 
-// áèáëèîòå÷íûå ôóíêöèè
-int LZW_archiver::compress_zlib(FILE *source, FILE *dest, int level){
-	int ret, flush;
-	unsigned have;
-	z_stream strm;
-	unsigned char in[CHUNK];
-	unsigned char out[CHUNK];
+// ???????????
+int LZW_archiver::compress_zlib(FILE *src, FILE *dst, int level){
+	uint8_t inbuff[CHUNK];
+	uint8_t outbuff[CHUNK];
+	z_stream stream = { 0 };
 
-	/* allocate deflate state */
-	strm.zalloc = Z_NULL;
-	strm.zfree = Z_NULL;
-	strm.opaque = Z_NULL;
-	ret = deflateInit(&strm, level);
-	if (ret != Z_OK)
-		return ret;
+	if (deflateInit(&stream, 9) != Z_OK)
+	{
+		fprintf(stderr, "deflateInit(...) failed!\n");
+		return false;
+	}
 
-	/* compress until end of file */
+	int flush;
 	do {
-		strm.avail_in = fread(in, 1, CHUNK, source);
-		if (ferror(source)) {
-			(void)deflateEnd(&strm);
-			return Z_ERRNO;
+		stream.avail_in = fread(inbuff, 1, CHUNK, src);
+		if (ferror(src))
+		{
+			cout << "fread(...) failed!" << endl;
+			deflateEnd(&stream);
+			return false;
 		}
-		flush = feof(source) ? Z_FINISH : Z_NO_FLUSH;
-		strm.next_in = in;
+
+		flush = feof(src) ? Z_FINISH : Z_NO_FLUSH;
+		stream.next_in = inbuff;
 
 		do {
-			strm.avail_out = CHUNK;
-			strm.next_out = out;
-			ret = deflate(&strm, flush);
-			assert(ret != Z_STREAM_ERROR);
-			have = CHUNK - strm.avail_out;
-			if (fwrite(out, 1, have, dest) != have || ferror(dest)) {
-				(void)deflateEnd(&strm);
-				return Z_ERRNO;
-			}
-		} while (strm.avail_out == 0);
-		assert(strm.avail_in == 0);
+			stream.avail_out = CHUNK;
+			stream.next_out = outbuff;
+			deflate(&stream, flush);
+			uint32_t nbytes = CHUNK - stream.avail_out;
 
+			if (fwrite(outbuff, 1, nbytes, dst) != nbytes || ferror(dst))
+			{
+				fprintf(stderr, "fwrite(...) failed!\n");
+				deflateEnd(&stream);
+				return 0;
+			}
+		} while (stream.avail_out == 0);
 	} while (flush != Z_FINISH);
-	assert(ret == Z_STREAM_END);
-	(void)deflateEnd(&strm);
-	return Z_OK;
+
+	deflateEnd(&stream);
+	return 1;
 }
 
-int LZW_archiver::decompess_zlib(FILE *source, FILE *dest){
-	int ret;
-	unsigned have;
-	z_stream strm;
-	unsigned char in[CHUNK];
-	unsigned char out[CHUNK];
+int LZW_archiver::decompess_zlib(FILE *src, FILE *dst){
+	uint8_t inbuff[CHUNK];
+	uint8_t outbuff[CHUNK];
+	z_stream stream = { 0 };
 
-	/* allocate inflate state */
-	strm.zalloc = Z_NULL;
-	strm.zfree = Z_NULL;
-	strm.opaque = Z_NULL;
-	strm.avail_in = 0;
-	strm.next_in = Z_NULL;
-	ret = inflateInit(&strm);
-	if (ret != Z_OK)
-		return ret;
+	int result = inflateInit(&stream);
+	if (result != Z_OK)
+	{
+		cout << "inflateInit(...) failed!" << endl;
+		return false;
+	}
 
-	/* decompress until deflate stream ends or end of file */
 	do {
-		strm.avail_in = fread(in, 1, CHUNK, source);
-		if (ferror(source)) {
-			(void)inflateEnd(&strm);
-			return Z_ERRNO;
+		stream.avail_in = fread(inbuff, 1, CHUNK, src);
+		if (ferror(src)) {
+			cout << "fread(...) failed!" << endl;
+			inflateEnd(&stream);
+			return false;
 		}
-		if (strm.avail_in == 0)
+
+		if (stream.avail_in == 0)
 			break;
-		strm.next_in = in;
 
-		/* run inflate() on input until output buffer not full */
+		stream.next_in = inbuff;
+
 		do {
-			strm.avail_out = CHUNK;
-			strm.next_out = out;
-			ret = inflate(&strm, Z_NO_FLUSH);
-			assert(ret != Z_STREAM_ERROR);  /* state not clobbered */
-			switch (ret) {
-			case Z_NEED_DICT:
-				ret = Z_DATA_ERROR;     /* and fall through */
-			case Z_DATA_ERROR:
-			case Z_MEM_ERROR:
-				(void)inflateEnd(&strm);
-				return ret;
+			stream.avail_out = CHUNK;
+			stream.next_out = outbuff;
+			result = inflate(&stream, Z_NO_FLUSH);
+			if (result == Z_NEED_DICT || result == Z_DATA_ERROR ||
+				result == Z_MEM_ERROR)
+			{
+				cout << result << endl;;
+				inflateEnd(&stream);
+				return false;
 			}
-			have = CHUNK - strm.avail_out;
-			if (fwrite(out, 1, have, dest) != have || ferror(dest)) {
-				(void)inflateEnd(&strm);
-				return Z_ERRNO;
+
+			uint32_t nbytes = CHUNK - stream.avail_out;
+
+			if (fwrite(outbuff, 1, nbytes, dst) != nbytes || ferror(dst))
+			{
+				cout << "fwrite(...) failed!" << endl;
+				inflateEnd(&stream);
+				return false;
 			}
-		} while (strm.avail_out == 0);
+		} while (stream.avail_out == 0);
+	} while (result != Z_STREAM_END);
 
-		/* done when inflate() says it's done */
-	} while (ret != Z_STREAM_END);
-
-	/* clean up and return */
-	(void)inflateEnd(&strm);
-	return ret == Z_STREAM_END ? Z_OK : Z_DATA_ERROR;
+	inflateEnd(&stream);
+	return result == Z_STREAM_END;
 }

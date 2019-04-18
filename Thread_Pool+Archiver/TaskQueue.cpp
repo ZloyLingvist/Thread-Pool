@@ -7,9 +7,6 @@ TaskQueue::TaskQueue(int q, vector<string> vec, vector<std::function<void()>> fu
 	functions = func;
 }
 
-//int now() {
-	//return k;
-//}
 
 void TaskQueue::add_task(std::thread::id this_id) {
 	srand(time(NULL));
