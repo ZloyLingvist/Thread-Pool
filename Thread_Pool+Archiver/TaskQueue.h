@@ -23,28 +23,34 @@ struct task {
 	bool operator<(const task &other) const { return priority < other.priority; }
 };
 
+template <typename T>
 class TaskQueue {
 private:
-	std::priority_queue<task> function_queue;
-	size_t sz;
-	int quescap;
-	std::mutex m_mtx;
-	std::condition_variable m_cond;
+	std::queue<T> q;
+	std::mutex mutex;
 public:
-	task t;
-	int r = 0;
-	int k = 0;
-	vector<string> myvec;
-	vector<std::function<void()>> functions;
-	TaskQueue(int q, vector<string> vec, vector<std::function<void()>> func);
+	bool push(T const & value){
+		std::unique_lock<std::mutex> lock(mutex);
+		q.push(value);
+		return true;
+	}
+		
+	bool pop(T & v){
+		std::unique_lock<std::mutex> lock(mutex);
+		if (q.empty()){
+			return false;
+		}
 
-	void add_task(std::thread::id this_id);
-	void push_to_end(task d, std::thread::id this_id); 
-	void print(int mode, std::thread::id this_id);
-	task give_task();
-	bool empty();
-	void pop();
-	TaskQueue::~TaskQueue() {}
+		v = q.front();
+		q.pop();
+		return true;
+	}
+
+	bool empty(){
+		std::unique_lock<std::mutex> lock(mutex);
+		return q.empty();
+	}
 };
+
 
 

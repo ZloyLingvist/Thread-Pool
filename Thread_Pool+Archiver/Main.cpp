@@ -4,6 +4,7 @@
 #include "Thread_pool.h"
 #include "TaskQueue.h"
 #include "archive.h"
+#include "libarch.h"
 #include "tester.h"
 #include <time.h>
 
@@ -13,73 +14,67 @@ int p = 2;
 
 /*------------ Задачи ---------------*/
 
-void add(){
+void add(int a,const char *in){
 	ifstream inFile;
 	ofstream outFile;
-	LZW_archiver obj;
-
-	char *in = "in1.txt";
+	lib_archiver obj;
 	char *out = "res.txt";
 
 	/* создали архив */
 	cout << "Make archive" << endl;
-	Tar tar("archive.tar", 0);
-
+	LZW_archiver tar("archive.tar", 0);
+	
 	cout << "Try to compress" << endl;
-	obj.intf(in, "compress_1.txt", 1); //1-сжатие 2-расжатие - внутреннее 3,4 библиотечное
+	tar.compress(in, "compress_1.txt");
+	obj.compress(in, "compress_2.txt");
 	
 	tar.add_to_archive("compress_1.txt");
+	tar.add_to_archive("compress_2.txt");
 	tar.close();
 }
 
-void extract(){
-	char *name = "archive.tar";
-	Tar tar(name, 1);
+void extract(int a,const char *name){
+	lib_archiver obj;
+	LZW_archiver tar(name, 1);
 	cout << "Try to extract" << endl;
 	tar.extract(name);
-}
-
-void decompress() {
-	LZW_archiver obj;
-	char *in = "In.txt";
-	char *out = "res.txt";
-
 	char *n1 = "compress_1.txt";
-	obj.intf(n1,out,2);
+	tar.decompress(n1,"res_f.txt");
+	obj.decompress("compress_2.txt", "res_s.txt");
 }
 
-void write() {
+
+void write(int a) {
 	cout << "I need for number task" << endl;
 }
 
-int main(/*int argc, char* argv[]*/) {
+
+int main() {
 	setlocale(LC_ALL, "Russian");
 
 	int w = 2;
 	int q = 3;
 
 	bool v = true;
-	int p = 1;
 	
-	vector<string> arr = { "Создать" ,"Извлечь","Расжать","Написать"};
-	vector<std::function<void()>> functions = { add,extract,decompress,write};
-
-	TaskQueue queue(q, arr, functions);
-	std::thread::id main_thread_id = std::this_thread::get_id();
-	queue.add_task(main_thread_id);
-
-	Thread_pool thread_pool(w);
-	thread_pool.init(w, queue);
-
+	Thread_pool p(2);
+	p.push(add,"in3.txt");
+	p.push(extract,"archive.tar");
+	p.push(write);
 	
 	/*------------ Тестирование ------------ */
-	//Testing_class obj;
+	cout << "testing" << endl;
+	Testing_class obj;
 	/* Генерирует имена файлов, их количество, содержимое сама программа */
-	//cout << obj.test_1(1) << endl;
-	//cout << obj.test_2(2) << endl;
+	cout << obj.test_1(1) << endl;
+	cout << obj.test_2(2) << endl;
 	/* Пользовательский ввод */
-	//cout << obj.user_test("myarch.tar","in1.txt", "in2.txt",2);
-	//cout << endl;
-	//system("pause");
+	cout << obj.user_test("myarch.tar","in1.txt", "in2.txt",2);
+	
+	lib_archiver obj2;
+	obj2.compress("in1.txt", "t_in1.txt");
+	obj2.decompress("t_in1.txt", "TTT.txt");
+
+	system("pause");
 	return 0;
 }

@@ -112,34 +112,34 @@ void Testing_class::creation_function(int p) {
 		cout << "Test on creation" << endl;
 	}
 
-	Tar tar(test_vector[0].c_str(), 0);
+	LZW_archiver myar(test_vector[0].c_str(), 0);
 	for (size_t i = 1; i < test_vector.size()-minus; i++){
 		if (test_vector[i].length() > 0) {
 			size_before = size_before + filesize(test_vector[i].c_str());
 			if ((p == 1 || p==4) || test_vector.back()=="1"){
-				tar.add_to_archive(test_vector[i].c_str());
+				myar.add_to_archive(test_vector[i].c_str());
 				rename(test_vector[i].c_str(), ("temp_" + test_vector[i]).c_str());
 			}
 
 			if (p == 2 || test_vector.back() == "2"){
-				obj.intf(test_vector[i].c_str(), ("temp_" + test_vector[i]).c_str(), 1);
-				tar.add_to_archive(("temp_" + test_vector[i]).c_str());
+				myar.compress(test_vector[i].c_str(), ("temp_" + test_vector[i]).c_str());
+				myar.add_to_archive(("temp_" + test_vector[i]).c_str());
 			}
 
 			if (p == 3 || test_vector.back() == "3"){
-				obj.intf(test_vector[i].c_str(), ("temp_" + test_vector[i]).c_str(), 3);
-				tar.add_to_archive(("temp_" + test_vector[i]).c_str());
+				myar.compress(test_vector[i].c_str(), ("temp_" + test_vector[i]).c_str());
+				myar.add_to_archive(("temp_" + test_vector[i]).c_str());
 			}
 		}
 	}
 
-	tar.close();
+	myar.close();
 }
 
 bool Testing_class::extraction_function(int p){
-    Tar tar(test_vector[0].c_str(), 0);
+    LZW_archiver lzw(test_vector[0].c_str(), 0);
 	int minus = 0;
-	tar.extract(test_vector[0].c_str());
+	lzw.extract(test_vector[0].c_str());
 
 	if (p == 0) {
 		minus = 1;
@@ -157,7 +157,7 @@ bool Testing_class::extraction_function(int p){
 			}
 
 			if (p == 2 || test_vector.back() == "2") {
-				obj.intf(("temp_" + test_vector[i]).c_str(), ("res_" + test_vector[i]).c_str(), 2);
+				lzw.decompress(("temp_" + test_vector[i]).c_str(), ("res_" + test_vector[i]).c_str());
 				if (isFilesEqual(test_vector[i].c_str(), ("res_" + test_vector[i]).c_str()) != true) {
 					return false;
 				};
@@ -165,7 +165,7 @@ bool Testing_class::extraction_function(int p){
 			}
 
 			if (p == 3 || test_vector.back() == "3") {
-				obj.intf(("temp_" + test_vector[i]).c_str(), ("res_" + test_vector[i]).c_str(), 4);
+				lzw.decompress(("temp_" + test_vector[i]).c_str(), ("res_" + test_vector[i]).c_str());
 				size_after = size_after + filesize(("res_" + test_vector[i]).c_str());
 			}
 		}
@@ -207,7 +207,6 @@ bool Testing_class::test_2(int p) {
 	test_vector.clear();
 	return true;
 }
-
 bool Testing_class::test_user() {
 	cout << "User Test" << endl;
 	creation_function(0);

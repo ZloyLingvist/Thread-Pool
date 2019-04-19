@@ -19,7 +19,6 @@ public:
 	~Testing_class()=default;
 
 	vector<string> test_vector;
-	LZW_archiver obj;
 	double size_after = 0, size_before = 0;
 	
 	///вспомогательные функции
@@ -59,5 +58,4 @@ public:
 			return false;
 		}
 	}
-
 };
