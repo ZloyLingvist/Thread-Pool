@@ -21,7 +21,7 @@ Thread_pool thread_pool(w, queue, v); //w -- число тредов
 ### Недостатки ###
 
 В обязательном порядке у вызываемой функции должен быть фиктивный параметр int
-# Пример #
+#### Пример ####
 ```cpp
 void myfunc(int i,const char *in){
 	cout << in << endl;
