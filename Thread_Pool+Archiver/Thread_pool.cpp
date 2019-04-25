@@ -15,6 +15,13 @@ Thread_pool::Thread_pool(int w, TaskQueue &obj, bool verbose) : lock(), data_con
 	v = verbose;
 }
 
+Thread_pool::Thread_pool(int w, vector<std::function<void()>> myv, bool verbose) : lock(), data_condition(), active(true), vector_thread_pool() {
+	workers = w;
+	for (int i = 0; i < workers; i++) {
+		vector_thread_pool.emplace_back(std::thread(&Thread_pool::simple_run, this, std::ref(myv)));
+	}
+}
+
 Thread_pool::~Thread_pool() {
 	for (auto &t : vector_thread_pool) {
 		t.join();
@@ -101,4 +108,49 @@ bool Thread_pool::run(TaskQueue &obj,std::thread::id this_id) {
 	}
 
 	return true;
+}
+
+void Thread_pool::simple_run(vector<std::function<void()>> myv) {
+	bool v = true;
+	std::function<void()> func;
+	task d;
+	int id = 0;
+	int error = 0;
+	string name = "";
+	string error_name = "";
+	std::thread::id this_id = std::this_thread::get_id();
+
+	while (true) {
+		{
+			std::unique_lock<std::mutex> lock_(lock);
+			data_condition.wait(lock_, [this_id, this, &myv]() {
+				cout << endl;
+				return !myv.empty() || !active;
+			});
+
+			if (!active && myv.empty()) {
+				cout << "Задач для " << this_id << " нет" << endl;
+				return;
+			}
+
+			func = myv.back();
+			id = myv.size();
+			if (myv.empty() == false){
+				myv.pop_back();
+			}
+			active = false;
+			data_condition.notify_all();
+		}
+
+		try {
+			func();
+			cout.width(10);
+			std::cout << this_id << " Задача " << name << " выполнена " << std::endl;
+		}
+
+		catch (const std::exception &e) {
+			cout.width(10);
+			std::cout << this_id << " Вызвано исключение у задачи " << id << std::endl;
+		}
+	}
 }

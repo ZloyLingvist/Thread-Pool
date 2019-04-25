@@ -63,6 +63,7 @@ public:
 	bool test_5(const char* in, const char* out);
 	bool test_gl(int w, int q);
 	bool test_7(int q);
+	bool test_8(int w);
 };
 
 void write(int i, const char *in, int count);
