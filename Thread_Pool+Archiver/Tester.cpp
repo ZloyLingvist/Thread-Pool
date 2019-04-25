@@ -90,6 +90,7 @@ bool Testing_class::test_5(const char* in, const char* out) {
 	return true;
 }
 
+///// Для общего теста ///
 
 void extract(int i, const char *name) {
 	LZW_archiver myar(name, 1);
@@ -150,6 +151,54 @@ void removing(const char *name) {
 	remove("tmpfile1.txt");
 	remove("tmpfile2.txt");
 }
+
+bool Testing_class::test_7(int q) {
+	task t1, t2, t3, t4, t5, t6, t7, t8;
+	bool v = false;
+	TaskQueue queue(q, v);
+	try {
+		t1.add_function(compress_own, "newarch.tar", "in1.txt", "tempfile1.txt", "tempfile2.txt", "in2.txt");
+		t2.add_function(extract, "newarch.tar");
+		t3.add_function(decompress_own, "newarch.tar", "tempfile1.txt", "tempfile2.txt", "res1.txt", "res2.txt");
+		t4.add_function(comp, "in1.txt", "in2.txt","res1.txt","res2.txt");
+
+		t5.add_function(compress_own, "newarch2.tar", "in1.txt", "tempfile1.txt", "tempfile2.txt", "in2.txt");
+		t6.add_function(extract, "newarch2.tar");
+		t7.add_function(decompress_own, "newarch2.tar", "tempfile1.txt", "tempfile2.txt", "res1_lib.txt", "res2_lib.txt");
+		t8.add_function(comp, "in1.txt", "in2.txt", "res1_lib.txt", "res2_lib.txt");
+
+		queue.add_task("Add and Compress (own)", 5, t1);
+		queue.add_task("Add and Compress (lib)", 5, t5);
+		queue.add_task("Extract (own)", 4, t2);
+		queue.add_task("Extract (lib)", 4, t6);
+		queue.add_task("Decompress_own", 3, t3);
+		queue.add_task("Decompress_lib", 3, t7);
+		queue.simple_run();
+		return true;
+	}
+	catch (const std::exception &e) {
+		return false;
+	}
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 bool Testing_class::test_gl(int w,int q) {
 	//removing("newarch.tar");

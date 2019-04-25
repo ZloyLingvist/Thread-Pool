@@ -129,3 +129,14 @@ size_t TaskQueue::size_function_queue() {
 	return function_queue.size();
 }
 
+void TaskQueue::simple_run(){
+	int k = 0;
+	while (check_task_vector() != true) {
+		push(k);
+		(*task_f())(task_id());
+		std::cout << " Задача " << task_name()<<" выполнена " << std::endl;
+		pop();
+		k = k + 1;
+	}
+	cout << "Finished" << endl;
+}

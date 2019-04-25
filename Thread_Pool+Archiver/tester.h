@@ -21,6 +21,7 @@ public:
 	vector<string> test_vector;
 	double size_after = 0, size_before = 0;
 	
+	///вспомогательные функции
 	string creativer();
 	bool isFilesEqual(const std::string& lFilePath, const std::string& rFilePath);
 	bool exists(const char *name);
@@ -61,6 +62,7 @@ public:
 	bool test_4(int w,int q);
 	bool test_5(const char* in, const char* out);
 	bool test_gl(int w, int q);
+	bool test_7(int q);
 };
 
 void write(int i, const char *in, int count);

@@ -87,6 +87,8 @@ public:
 	int task_id();
 	std::function<void(int id)> *task_f();
 	string task_name();
+
+	void simple_run();
 	
 	TaskQueue() = default;
 };
