@@ -1,4 +1,5 @@
 #pragma once
+#include <memory>
 #include "tar.h"
 #include "quicklz.h"
 
@@ -9,3 +10,4 @@ public:
 	int compress(const char* in, const char* out) override;
 	int decompress(const char* in, const char* out) override;
 };
+

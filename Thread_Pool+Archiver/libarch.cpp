@@ -9,3 +9,4 @@ int lib_archiver::decompress(const char* in, const char* out) {
 	quick_decompress(in, out);
 	return 0;
 }
+

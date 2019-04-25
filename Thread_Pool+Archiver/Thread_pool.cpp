@@ -1,140 +1,101 @@
-#pragma once
+﻿#pragma once
 #include "Thread_pool.h"
 #include "TaskQueue.h"
 
 extern bool v;
 
-Thread_pool::Thread_pool(){ 
-	init(); 
+Thread_pool::Thread_pool(int w, TaskQueue &obj, bool verbose) : lock(), data_condition(), active(true), vector_thread_pool(){
+	workers = w; 
+	for (int i = 0; i < workers; i++) {
+		vector_thread_pool.emplace_back(std::thread(&Thread_pool::work, this, std::ref(obj)));
+	}
+	v = verbose;
 }
-
-Thread_pool::Thread_pool(int nThreads){ 
-	init(); 
-	resize(nThreads); 
-}
-
-Thread_pool::~Thread_pool(){
-	stop(true);
-}
-
-int Thread_pool::size(){
-	return static_cast<int>(threads.size()); 
-}
-
-int Thread_pool::n_idle(){ 
-	return nWaiting; 
-}
-
-void Thread_pool::resize(int nThreads){
-	if (!isStop && !isDone) {
-		int oldNThreads = static_cast<int>(this->threads.size());
-		if (oldNThreads <= nThreads){ 
-			threads.resize(nThreads);
-			flags.resize(nThreads);
-
-			for (int i = oldNThreads; i < nThreads; ++i) {
-				flags[i] = std::make_shared<std::atomic<bool>>(false);
-				set_thread(i);
-			}
-		}
-		else {  
-			for (int i = oldNThreads - 1; i >= nThreads; --i) {
-				*flags[i] = true;  
-				threads[i]->detach();
-			}
-			{
-
-				std::unique_lock<std::mutex> lock(mutex);
-				cv.notify_all();
-			}
-			threads.resize(nThreads);  
-			flags.resize(nThreads);  
-		}
+Thread_pool::~Thread_pool() {
+	for (auto &t : vector_thread_pool) {
+		t.join();
 	}
 }
 
-void Thread_pool::clear_queue() {
-	std::function<void(int id)> * _f;
-	while (q.pop(_f)){
-		delete _f;
-	}
-}
-
-std::function<void(int)> Thread_pool::pop(){
-	std::function<void(int id)> * _f = nullptr;
-	q.pop(_f);
-	std::unique_ptr<std::function<void(int id)>> func(_f); 
-	std::function<void(int)> f;
-	if (_f){
-		f = *_f;
-	}
-	return f;
-}
-
-void Thread_pool::stop(bool isWait) {
-	isWait = false;
-	if (!isWait) {
-		if (this->isStop)
-			return;
-		isStop = true;
-		for (int i = 0, n = size(); i < n; ++i) {
-			*this->flags[i] = true;  
-		}
-		clear_queue(); 
-	}
-	else {
-		if (isDone || isStop)
-			return;
-		isDone = true; 
-	}
-	{
-		std::unique_lock<std::mutex> lock(mutex);
-		cv.notify_all();  
-	}
-	for (int i = 0; i < static_cast<int>(threads.size()); ++i){  
-		if (threads[i]->joinable()){
-			threads[i]->join();
-		}
-	}
+void Thread_pool::work(TaskQueue &obj){
+	bool v = true;
+	std::function<void(int id)> func;
+	task d;
+	int id = 0;
+	int error = 0;
+	int workday = 0;
+	string name = "";
+	string error_name="";
+	std::thread::id this_id = std::this_thread::get_id();
 	
-	clear_queue();
-	threads.clear();
-	flags.clear();
-}
+	while (true) {
+		{
+			std::unique_lock<std::mutex> lock_(lock);
+			data_condition.wait(lock_,[this,&obj](){
+				return !obj.empty() || !active;
+			});
 
-void Thread_pool::set_thread(int i) {
-	std::shared_ptr<std::atomic<bool>> flag(flags[i]); 
-	auto f = [this, i, flag]() {
-		std::atomic<bool> & _flag = *flag;
-		std::function<void(int id)> * _f;
-		bool isPop = q.pop(_f);
-		while (true) {
-			while (isPop) { 
-				std::unique_ptr<std::function<void(int id)>> func(_f); 
-				(*_f)(i);
-				if (_flag) {
+			if (!active && obj.empty()) {
+				obj.print(1, this_id);
+				bool v1=obj.run(this_id);
+				if (v1 == false){
+					cout << "Задач нет" << endl;
 					return;
 				}
-				else {
-					isPop = this->q.pop(_f);
-				}
+				error = 0;
+				obj.print(4, this_id);
 			}
-			
-			std::unique_lock<std::mutex> lock(this->mutex);
-			++this->nWaiting;
-			this->cv.wait(lock, [this, &_f, &isPop, &_flag]() { isPop = this->q.pop(_f); return isPop || this->isDone || _flag; });
-			--this->nWaiting;
-			if (!isPop){
-				return;
+
+			d = obj.give_task();
+			name = d.name;
+			workday = d.workday;
+
+			if (error < 2 && error_name != name) {
+				func = *d.func;
+				id = d.id_;
+				workday = d.workday;
+				obj.pop();
+			}
+			else {
+				obj.pop();
+				cout.width(10);
+				obj.run(this_id);
+				d = obj.give_task();
+				name = d.name;
+				func = *d.func;
+				id = d.id_;
+				workday = d.workday;
+				error = 0;
+			}
+
+			active = false;
+			data_condition.notify_all();
+			srand(time(NULL));
+			if (v == true) {
+				cout.width(10);
+				cout << this_id << " Отправляем в сон " << endl;
+			}
+			std::this_thread::sleep_for(std::chrono::milliseconds(workday));
+		}
+
+		try {
+			func(id);
+			if (v == true) {
+				cout.width(10);
+				std::cout << this_id << " Задача " << d.name << " c приоритетом " << d.priority << " выполнена " << std::endl;
 			}
 		}
-	};
-	
-	threads[i].reset(new std::thread(f));
-}
 
-void Thread_pool::init(){ 
-	nWaiting = 0; 
-	isStop = false; 
-	isDone = false; 
+		catch (const std::exception &e) {
+			if (v == true){
+				cout.width(10);
+				std::cout << this_id << " Вызвано исключение у задачи " << d.id_ << " c приоритетом " << d.priority << std::endl;
+			}
+			
+			obj.push_to_end(d,this_id);
+			error_name = name;
+			error = error + 1;
+		}	
+	}
 }
+	

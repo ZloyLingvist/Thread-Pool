@@ -36,27 +36,6 @@ using namespace std;
 
 class Tar {
 public:
-	struct tarheader {
-		char filename[100];
-		char filemode[8];
-		char userid[8];
-		char groupid[8];
-		char filesize[12];
-		char modiftime[12];
-		char checksum[8];
-		char filetype[1];
-		char linkname[100];
-
-		char indicator[6];
-		char version[2];
-		char username[32];
-		char groupname[32];
-		char majornumber[8];
-		char minornumber[8];
-		char prefix[155];
-		char pad[12];
-	};
-
 	Tar()=default;
 	~Tar()=default;
 	virtual int compress(const char *input, const char *output) = 0;

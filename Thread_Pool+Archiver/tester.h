@@ -1,7 +1,5 @@
 #pragma once
 #pragma warning(disable:4996)
-#include<tuple>
-#pragma once
 #include <iostream>
 #include <fstream>
 #include <time.h>
@@ -10,6 +8,8 @@
 #include <sstream>
 #include "tar.h"
 #include "archive.h"
+#include "libarch.h"
+#include "own_archiver.h"
 
 using namespace std;
 
@@ -31,9 +31,9 @@ public:
 
 	bool test_1(int p);
 	bool test_2(int p);
-	bool test_user();
 	void create_file(int mode,vector<string> &filenames);
 
+	bool sub_test_3();
 	template<typename T>
 	string toString(T value){
 		ostringstream oss;
@@ -49,13 +49,19 @@ public:
 	}
 
 	template< typename ... Args >
-	bool user_test(const Args& ... args){
+	bool test_3(const Args& ... args){
 		merge({ toString(args)... });
-		if (test_user() == true) {
+		if (sub_test_3() == true) {
 			return true;
 		}
 		else {
 			return false;
 		}
 	}
+
+	bool test_4(int w,int q);
+	bool test_5(const char* in, const char* out);
+	bool test_gl(int w, int q);
 };
+
+void write(int i, const char *in, int count);
