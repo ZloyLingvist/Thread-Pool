@@ -1,26 +1,38 @@
-#pragma once
+п»ї#pragma once
 #include "Thread_pool.h"
 #include "TaskQueue.h"
 
 extern bool v;
 
-Thread_pool::Thread_pool(int w) : lock(), data_condition(), active(true), vector_thread_pool(){ workers = w; }
-Thread_pool::~Thread_pool(){
-	for (auto &t : vector_thread_pool){
+Thread_pool::Thread_pool(int w, TaskQueue &obj, bool verbose) : lock(), data_condition(), active(true), vector_thread_pool(){
+	workers = w; 
+	for (int i = 0; i < workers; i++) {
+		vector_thread_pool.emplace_back(std::thread(&Thread_pool::work, this, std::ref(obj)));
+	}
+	
+	std::thread::id main_thread_id = std::this_thread::get_id();
+	run(obj,main_thread_id);
+	v = verbose;
+}
+
+Thread_pool::Thread_pool(int w, vector<std::function<void()>> myv, bool verbose) : lock(), data_condition(), active(true), vector_thread_pool() {
+	workers = w;
+	for (int i = 0; i < workers; i++) {
+		vector_thread_pool.emplace_back(std::thread(&Thread_pool::simple_run, this, std::ref(myv)));
+	}
+}
+
+Thread_pool::~Thread_pool() {
+	for (auto &t : vector_thread_pool) {
 		t.join();
 	}
 }
 
-/*--- Закидываем в вектор треды ---*/
-void Thread_pool::init(int workers, TaskQueue &obj){
-	for (int i = 0; i < workers; i++){
-		vector_thread_pool.emplace_back(std::thread(&Thread_pool::work,this,std::ref(obj)));
-	}
-}
-
 void Thread_pool::work(TaskQueue &obj){
-	std::function<void()> func;
+	bool v = true;
+	std::function<void(int id)> *func;
 	task d;
+	int id = 0;
 	int error = 0;
 	string name = "";
 	string error_name="";
@@ -29,63 +41,116 @@ void Thread_pool::work(TaskQueue &obj){
 	while (true) {
 		{
 			std::unique_lock<std::mutex> lock_(lock);
-			data_condition.wait(lock_,[this,&obj](){
-				return !obj.empty() || !active;
+			data_condition.wait(lock_,[this_id,this,&obj](){
+				cout << endl;
+				return !obj.empty(this_id) || !active;
 			});
 
-			if (!active && obj.empty()) {
+			if (!active && obj.empty(this_id)) {
 				obj.print(1, this_id);
-				obj.add_task(this_id);
+				if (run(obj,this_id)==false){
+					cout << "Р—Р°РґР°С‡ РґР»СЏ " << this_id << " РЅРµС‚" << endl;
+					return;
+				}
+
 				error = 0;
 				obj.print(4, this_id);
 			}
 
-			d = obj.give_task();
-			name = d.name;
-
-			if (error < 2 && error_name != name) {
-				func = d.f;
+			name = obj.task_name();
+			if (error < 2 && error_name != name){
+				func = obj.task_f();
+				id = obj.task_id();
 				obj.pop();
 			}
 			else {
-				obj.pop();//удаляем плохую задачу
-				//if (v == true) {
-					cout.width(10);
-					cout << " Задача " + d.id <<  + " удалена " << this_id <<  endl;
-				//}
-				obj.add_task(this_id);//генерируем новую
-				d = obj.give_task();
-				name = d.name;
-				func = d.f;
-				error = 0;//обнуляем счетчик ошибок
+				obj.pop();
+				name = obj.task_name();
+				func = obj.task_f();
+				id = obj.task_id();
+				error = 0;
 			}
 
 			active = false;
 			data_condition.notify_all();
-			srand(time(NULL));
-			if (v==1){
-				cout.width(10);
-				cout << this_id <<" Отправляем в сон " << endl;
-			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(100*(rand()%10)));
 		}
 
 		try {
-			func();
+			(*func)(id);
 			if (v == true) {
 				cout.width(10);
-				std::cout << this_id << " Задача " << d.id << " c приоритетом " << d.priority << " выполнена " << std::endl;
+				std::cout << this_id << " Р—Р°РґР°С‡Р° " << name << " РІС‹РїРѕР»РЅРµРЅР° " << std::endl;
 			}
 		}
+
 		catch (const std::exception &e) {
-			//if (v == true){
+			if (v == true){
 				cout.width(10);
-				std::cout << this_id << " Вызвано исключение у задачи " << d.id << " c приоритетом " << d.priority <<  std::endl;
-			//}
-			obj.push_to_end(d,this_id);
+				std::cout << this_id << " Р’С‹Р·РІР°РЅРѕ РёСЃРєР»СЋС‡РµРЅРёРµ Сѓ Р·Р°РґР°С‡Рё " << id << std::endl;
+			}
+			
+			obj.push_to_end(this_id);
 			error_name = name;
 			error = error + 1;
 		}	
 	}
 }
 	
+bool Thread_pool::run(TaskQueue &obj,std::thread::id this_id) {
+	int k = 0;
+	if (obj.check_task_vector() == true) {
+		return false;
+	}
+
+	for (int i = 0; i < (1 + rand() % obj.return_quescap()); i++) {
+		obj.push(k);
+		k = k + 1;
+	}
+
+	return true;
+}
+
+void Thread_pool::simple_run(vector<std::function<void()>> myv) {
+	bool v = true;
+	std::function<void()> func;
+	task d;
+	int id = 0;
+	int error = 0;
+	string name = "";
+	string error_name = "";
+	std::thread::id this_id = std::this_thread::get_id();
+
+	while (true) {
+		{
+			std::unique_lock<std::mutex> lock_(lock);
+			data_condition.wait(lock_, [this_id, this, &myv]() {
+				cout << endl;
+				return !myv.empty() || !active;
+			});
+
+			if (!active && myv.empty()) {
+				cout << "Р—Р°РґР°С‡ РґР»СЏ " << this_id << " РЅРµС‚" << endl;
+				return;
+			}
+
+			func = myv.back();
+			id = myv.size();
+			if (myv.empty() == false){
+				myv.pop_back();
+			}
+			active = false;
+			data_condition.notify_all();
+		}
+
+		try {
+			func();
+			cout.width(10);
+			std::cout << this_id << " Р—Р°РґР°С‡Р° " << name << " РІС‹РїРѕР»РЅРµРЅР° " << std::endl;
+		}
+
+		catch (const std::exception &e) {
+			cout.width(10);
+			std::cout << this_id << " Р’С‹Р·РІР°РЅРѕ РёСЃРєР»СЋС‡РµРЅРёРµ Сѓ Р·Р°РґР°С‡Рё " << id << std::endl;
+		}
+	}
+}

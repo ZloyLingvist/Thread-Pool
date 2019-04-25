@@ -16,11 +16,15 @@ class Thread_pool{
 		std::atomic<bool> active;
 		std::vector<std::thread> vector_thread_pool;
 		int workers = 0;
+		bool v = false;
 	friend class TaskQueue;
 	public:
-		Thread_pool(int w);
-		void init(int workers, TaskQueue &obj);
+		Thread_pool(int w, TaskQueue &obj, bool verbose);
+		Thread_pool(int w, vector<std::function<void()>> myv,bool verbose);
+
 		void work(TaskQueue &obj);
+		bool run(TaskQueue &obj,std::thread::id this_id);
+		void simple_run(vector<std::function<void()>> myv);
 		Thread_pool::~Thread_pool();
 };
 
