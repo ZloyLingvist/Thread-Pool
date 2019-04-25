@@ -11,7 +11,7 @@
 Пусто
 
 ### getting-started ###
-```
+``` cpp
 task t1;
 bool v = false;//показывать ли подробные сообщения
 TaskQueue queue(q, v); //q- длина очереди задач
@@ -25,7 +25,7 @@ Thread_pool thread_pool(w, queue, v); //w -- число тредов
 ### Недостатки ###
 В обязательном порядке у вызываемой функции должен быть фиктивный параметр int
 Пример
-```
+```cpp
 void myfunc(int i,const char *in){
 	cout << in << endl;
 }
