@@ -12,21 +12,19 @@
 using namespace std;
 
 struct task{
-public:
-	task() = default;
-	~task() = default;
-
+private:
 	int id_;
 	int priority;
 	string name;
 	bool doing;
-	int workday;
-	
 	std::function<void(int id)> *func;
+public:
+	task() = default;
+	~task() = default;
 	bool operator<(const task &other) const { return priority > other.priority; }
 
 	template<typename F,typename... Rest>
-	auto create(F && f,Rest&&... rest) ->std::future<decltype(f(0, rest...))> {
+	auto add_function(F && f,Rest&&... rest) ->std::future<decltype(f(0, rest...))> {
 		auto pck = std::make_shared<std::packaged_task<decltype(f(0, rest...))(int)>>(
 			std::bind(std::forward<F>(f), std::placeholders::_1, std::forward<Rest>(rest)...)
 			);
@@ -34,11 +32,29 @@ public:
 			(*pck)(id);
 		});
 
-		this->id_ = 0;
 		this->func = _f;
-		this->priority = 1;
-		this->workday = 0;
 		return pck->get_future();
+	}
+
+	int task_id() {
+		return this->id_;
+	}
+
+	void make_task(const char *name,int priority){
+		this->name = name;
+		this->priority = priority;
+	}
+
+	int task_priority() {
+		return this->priority;
+	}
+
+	string task_name() {
+		return this->name;
+	}
+
+	std::function<void(int id)> *task_func(){
+		return this->func;
 	}
 };
 
@@ -53,15 +69,25 @@ private:
 	bool v = false;
 	std::priority_queue<task> function_queue;
 	vector<task> task_vector;
+	task give_task();
 public:
 	TaskQueue(int q,bool verbose);
-	void add_task(const char *name,int p, int workday,task d);
-	bool run(std::thread::id this_id);
-	void push_to_end(task d, std::thread::id this_id);
+	TaskQueue& operator=(const TaskQueue& rhs) {};
+
+	void add_task(const char *name,int p,task obj);
+	void push_to_end(std::thread::id this_id);
 	void print(int mode, std::thread::id this_id); 
-	task give_task();
-	bool empty();
+	bool empty(std::thread::id this_id);
 	void pop();
+
+	bool check_task_vector();
+	size_t size_function_queue();
+	int return_quescap();
+	void push(int k);
+	int task_id();
+	std::function<void(int id)> *task_f();
+	string task_name();
+	
 	TaskQueue() = default;
 };
 

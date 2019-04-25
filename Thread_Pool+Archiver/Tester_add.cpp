@@ -71,18 +71,18 @@ void Testing_class::create_file(int p, vector<string> &filenames) {
 	if (p != 0) {
 		archname = creativer() + ".tar";
 		cout << archname << endl;
-		filenames.push_back(archname.c_str());//первый элемент вектора имя архива
+		filenames.push_back(archname.c_str());
 		file_amount = 1 + rand() % 10;
 		filenames.resize(file_amount);
 
 		for (i = 0; i < file_amount; i++) {
-			str1 = creativer();//имя файла
+			str1 = creativer();
 			str1 = str1 + ".txt";
 			filenames.push_back(str1);
 			out.open(str1);
-			text_amount = 1 + rand() % 250;//количество случайных строк
+			text_amount = 1 + rand() % 250;
 			for (j = 0; j < text_amount; j++) {
-				str2 = creativer();//строка
+				str2 = creativer();
 				out << str2 << endl;
 			}
 			out.close();
@@ -92,7 +92,7 @@ void Testing_class::create_file(int p, vector<string> &filenames) {
 		archname = test_vector[0].c_str();
 		filenames.push_back(archname.c_str());
 		filenames.resize(file_amount);
-		file_amount = test_vector.size() - 2;//первый и последний выкидываем
+		file_amount = test_vector.size() - 2;
 		for (size_t i = 1; i < test_vector.size() - 1; i++) {
 			filenames.push_back(test_vector[i].c_str());
 		}

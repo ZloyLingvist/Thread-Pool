@@ -7,8 +7,8 @@ struct dictionary {
 } dict[5021];
 
 
-std::shared_ptr<bi_filе> own_archiver::Open_File(const char *name, const char *mode) {
-	std::shared_ptr<bi_filе> b_file = std::make_shared<bi_filе>();
+std::shared_ptr<bi_file> own_archiver::Open_File(const char *name, const char *mode) {
+	std::shared_ptr<bi_file> b_file = std::make_shared<bi_file>();
 	b_file->file = fopen(name, mode);
 	b_file->rack = 0;
 	b_file->mask = 0x80;
@@ -16,7 +16,7 @@ std::shared_ptr<bi_filе> own_archiver::Open_File(const char *name, const char *m
 	return b_file;
 }
 
-void own_archiver::Close_File(std::shared_ptr<bi_filе> bfile, int mode) {
+void own_archiver::Close_File(std::shared_ptr<bi_file> bfile, int mode) {
 	if (mode == 0) {
 		if (bfile->mask != 0x80) {
 			putc(bfile->rack, bfile->file);
@@ -29,7 +29,7 @@ void own_archiver::Close_File(std::shared_ptr<bi_filе> bfile, int mode) {
 	}
 }
 
-void own_archiver::WriteBits(std::shared_ptr<bi_filе> bfile, ulong code, int count) {
+void own_archiver::WriteBits(std::shared_ptr<bi_file> bfile, ulong code, int count) {
 	ulong mask;
 	mask = 1L << (count - 1);
 	while (mask != 0) {
@@ -47,7 +47,7 @@ void own_archiver::WriteBits(std::shared_ptr<bi_filе> bfile, ulong code, int cou
 	}
 }
 
-ulong own_archiver::ReadBits(std::shared_ptr<bi_filе> bfile, int bit_count) {
+ulong own_archiver::ReadBits(std::shared_ptr<bi_file> bfile, int bit_count) {
 	ulong mask;
 	ulong return_value;
 	mask = 1L << (bit_count - 1);
@@ -93,20 +93,18 @@ int own_archiver::compress(const char *in,const char *out) {
 		dict[i].code_value = UNUSED;
 	}
 
-	/* Считать первый символ */
 	if ((string_code = getc(input)) == EOF) {
 		string_code = end_of_stream;
 	}
 
-	/* Пока не конец сообщения */
+	
 	while ((character = getc(input)) != EOF) {
-		/* Попытка найти в словаре пару <фраза, символ> */
 		index = find_dictionary_match(string_code, character);
 		if (dict[index].code_value != -1) {
 			string_code = dict[index].code_value;
 		}
 		else {
-			/* Добавление в словарь */
+			
 			if (next_code <= MAX_CODE) {
 				dict[index].code_value = next_code++;
 				dict[index].prefix_code = string_code;
@@ -118,7 +116,6 @@ int own_archiver::compress(const char *in,const char *out) {
 		}
 	}
 
-	/* Завершение кодирования */
 	WriteBits(b_file, (ulong)string_code, BITS);
 	WriteBits(b_file, (ulong)end_of_stream, BITS);
 	Close_File(b_file, 0);
@@ -176,16 +173,12 @@ int own_archiver::decompress(const char* in,const char* out) {
 	return 0;
 }
 
-//Процедура поиска в словаре указанной пары <код фразы,символ>.Для ускорения поиска используется хеш, получаемый 
-// из параметров.//
-
 uint own_archiver::find_dictionary_match(int prefix_code, int character) {
 	int index;
 	int offset;
 
 	index = (character << (BITS - 8)) ^ prefix_code;
 
-	/* Разрешение коллизий */
 	if (index == 0) {
 		offset = 1;
 	}
@@ -210,7 +203,7 @@ uint own_archiver::find_dictionary_match(int prefix_code, int character) {
 }
 
 uint own_archiver::decode_string(uint count, uint code) {
-	while (code > 255) /* Пока не встретится код символа */
+	while (code > 255) 
 	{
 		decode_stack[count++] = dict[code].character;
 		code = dict[code].prefix_code;

@@ -63,17 +63,17 @@ bool Testing_class::test_4(int w, int q) {
 	try {
 		task t1, t2, t3;
 		bool v = false;
-		t1.create(write, "T1\n", 2);
-		t2.create(write, "T2\n", 3);
-		t3.create(write, "T3\n", 1);
+		t1.add_function(write, "T1\n", 2);
+		t2.add_function(write, "T2\n", 3);
+		t3.add_function(write, "T3\n", 1);
 
 		TaskQueue queue(q,v);
-		queue.add_task("T1", 1,100,t1);
-		queue.add_task("T2", 3,100,t3);
-		queue.add_task("T3", 2,100,t2);
+		queue.add_task("T1", 1,t1);
+		queue.add_task("T2", 3,t3);
+		queue.add_task("T3", 2,t2);
 
-		std::thread::id main_thread_id = std::this_thread::get_id();
-		queue.run(main_thread_id);
+		//std::thread::id main_thread_id = std::this_thread::get_id();
+		//queue.run(main_thread_id);
 		Thread_pool thread_pool(w, queue,v);
 		return true;
 	}
@@ -90,8 +90,6 @@ bool Testing_class::test_5(const char* in, const char* out) {
 	return true;
 }
 
-
-///// Для общего теста ///
 
 void extract(int i, const char *name) {
 	LZW_archiver myar(name, 1);
@@ -161,27 +159,25 @@ bool Testing_class::test_gl(int w,int q) {
 		bool v = false;
 		TaskQueue queue(q, v);
 
-		t1.create(compress_own, "newarch.tar","in1.txt","tempfile1.txt","tempfile2.txt","in2.txt");
-		t2.create(extract, "newarch.tar");
-		t3.create(decompress_own, "newarch.tar", "tempfile1.txt", "tempfile2.txt", "res1.txt", "res2.txt");
-		t4.create(comp, "in1.txt", "in2.txt","res1.txt","res2.txt");
+		t1.add_function(compress_own, "newarch.tar","in1.txt","tempfile1.txt","tempfile2.txt","in2.txt");
+		t2.add_function(extract, "newarch.tar");
+		t3.add_function(decompress_own, "newarch.tar", "tempfile1.txt", "tempfile2.txt", "res1.txt", "res2.txt");
+		//t4.add_function(comp, "in1.txt", "in2.txt","res1.txt","res2.txt");
 
-		t5.create(compress_own, "newarch2.tar", "in1.txt", "tempfile1.txt", "tempfile2.txt", "in2.txt");
-		t6.create(extract, "newarch2.tar");
-		t7.create(decompress_own, "newarch2.tar", "tempfile1.txt", "tempfile2.txt", "res1_lib.txt", "res2_lib.txt");
-		t8.create(comp, "in1.txt", "in2.txt", "res1_lib.txt", "res2_lib.txt");
+		t5.add_function(compress_own, "newarch2.tar", "in1.txt", "tempfile1.txt", "tempfile2.txt", "in2.txt");
+		t6.add_function(extract, "newarch2.tar");
+		t7.add_function(decompress_own, "newarch2.tar", "tempfile1.txt", "tempfile2.txt", "res1_lib.txt", "res2_lib.txt");
+		//t8.add_function(comp, "in1.txt", "in2.txt", "res1_lib.txt", "res2_lib.txt");
 		
-		queue.add_task("Add and Compress (own)",5,1000,t1);
-		queue.add_task("Add and Compress (lib)",5,1000,t5);
-		queue.add_task("Extract (own)",4,200,t2);
-		queue.add_task("Extract (lib)",4,200,t6);
-		queue.add_task("Decompress_own",3,3000,t3);
-		queue.add_task("Decompress_lib",3,300, t7);
-		queue.add_task("Compare",2,200,t4);
-		queue.add_task("Compare",1,200,t8);
+		queue.add_task("Add and Compress (own)",5,t1);
+		queue.add_task("Add and Compress (lib)",5,t5);
+		queue.add_task("Extract (own)",4,t2);
+		queue.add_task("Extract (lib)",4,t6);
+		queue.add_task("Decompress_own",3,t3);
+		queue.add_task("Decompress_lib",3,t7);
+		//queue.add_task("Compare",2,t4);
+		//queue.add_task("Compare",1,t8);
 		
-		std::thread::id main_thread_id = std::this_thread::get_id();
-		queue.run(main_thread_id);
 		Thread_pool thread_pool(w, queue, v);
 		return true;
 	}

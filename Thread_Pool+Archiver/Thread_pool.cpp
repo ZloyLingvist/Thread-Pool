@@ -9,8 +9,12 @@ Thread_pool::Thread_pool(int w, TaskQueue &obj, bool verbose) : lock(), data_con
 	for (int i = 0; i < workers; i++) {
 		vector_thread_pool.emplace_back(std::thread(&Thread_pool::work, this, std::ref(obj)));
 	}
+	
+	std::thread::id main_thread_id = std::this_thread::get_id();
+	run(obj,main_thread_id);
 	v = verbose;
 }
+
 Thread_pool::~Thread_pool() {
 	for (auto &t : vector_thread_pool) {
 		t.join();
@@ -19,11 +23,10 @@ Thread_pool::~Thread_pool() {
 
 void Thread_pool::work(TaskQueue &obj){
 	bool v = true;
-	std::function<void(int id)> func;
+	std::function<void(int id)> *func;
 	task d;
 	int id = 0;
 	int error = 0;
-	int workday = 0;
 	string name = "";
 	string error_name="";
 	std::thread::id this_id = std::this_thread::get_id();
@@ -31,71 +34,71 @@ void Thread_pool::work(TaskQueue &obj){
 	while (true) {
 		{
 			std::unique_lock<std::mutex> lock_(lock);
-			data_condition.wait(lock_,[this,&obj](){
-				return !obj.empty() || !active;
+			data_condition.wait(lock_,[this_id,this,&obj](){
+				cout << endl;
+				return !obj.empty(this_id) || !active;
 			});
 
-			if (!active && obj.empty()) {
+			if (!active && obj.empty(this_id)) {
 				obj.print(1, this_id);
-				bool v1=obj.run(this_id);
-				if (v1 == false){
-					cout << "Задач нет" << endl;
+				if (run(obj,this_id)==false){
+					cout << "Задач для " << this_id << " нет" << endl;
 					return;
 				}
+
 				error = 0;
 				obj.print(4, this_id);
 			}
 
-			d = obj.give_task();
-			name = d.name;
-			workday = d.workday;
-
-			if (error < 2 && error_name != name) {
-				func = *d.func;
-				id = d.id_;
-				workday = d.workday;
+			name = obj.task_name();
+			if (error < 2 && error_name != name){
+				func = obj.task_f();
+				id = obj.task_id();
 				obj.pop();
 			}
 			else {
 				obj.pop();
-				cout.width(10);
-				obj.run(this_id);
-				d = obj.give_task();
-				name = d.name;
-				func = *d.func;
-				id = d.id_;
-				workday = d.workday;
+				name = obj.task_name();
+				func = obj.task_f();
+				id = obj.task_id();
 				error = 0;
 			}
 
 			active = false;
 			data_condition.notify_all();
-			srand(time(NULL));
-			if (v == true) {
-				cout.width(10);
-				cout << this_id << " Отправляем в сон " << endl;
-			}
-			std::this_thread::sleep_for(std::chrono::milliseconds(workday));
 		}
 
 		try {
-			func(id);
+			(*func)(id);
 			if (v == true) {
 				cout.width(10);
-				std::cout << this_id << " Задача " << d.name << " c приоритетом " << d.priority << " выполнена " << std::endl;
+				std::cout << this_id << " Задача " << name << " выполнена " << std::endl;
 			}
 		}
 
 		catch (const std::exception &e) {
 			if (v == true){
 				cout.width(10);
-				std::cout << this_id << " Вызвано исключение у задачи " << d.id_ << " c приоритетом " << d.priority << std::endl;
+				std::cout << this_id << " Вызвано исключение у задачи " << id << std::endl;
 			}
 			
-			obj.push_to_end(d,this_id);
+			obj.push_to_end(this_id);
 			error_name = name;
 			error = error + 1;
 		}	
 	}
 }
 	
+bool Thread_pool::run(TaskQueue &obj,std::thread::id this_id) {
+	int k = 0;
+	if (obj.check_task_vector() == true) {
+		return false;
+	}
+
+	for (int i = 0; i < (1 + rand() % obj.return_quescap()); i++) {
+		obj.push(k);
+		k = k + 1;
+	}
+
+	return true;
+}

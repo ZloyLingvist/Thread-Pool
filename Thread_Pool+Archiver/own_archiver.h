@@ -6,7 +6,7 @@ typedef unsigned char uchar;
 typedef unsigned long ulong;
 typedef unsigned int  uint;
 
-struct bi_filå {
+struct bi_file{
 	FILE *file;
 	uchar mask;
 	int rack;
@@ -30,11 +30,11 @@ public:
 	int compress(const char* in, const char* out) override;
 	int decompress(const char* in, const char* out) override;
 
-	std::shared_ptr<bi_filå> Open_File(const char *name, const char *mode);
-	void Close_File(std::shared_ptr<bi_filå> b, int mode);
+	std::shared_ptr<bi_file> Open_File(const char *name, const char *mode);
+	void Close_File(std::shared_ptr<bi_file> b, int mode);
 
-	void WriteBits(std::shared_ptr<bi_filå> bfile, ulong code, int count);
-	ulong ReadBits(std::shared_ptr<bi_filå> bfile, int bit_count);
+	void WriteBits(std::shared_ptr<bi_file> bfile, ulong code, int count);
+	ulong ReadBits(std::shared_ptr<bi_file> bfile, int bit_count);
 
 	uint find_dictionary_match(int prefix_code, int character);
 	uint decode_string(uint count, uint code);

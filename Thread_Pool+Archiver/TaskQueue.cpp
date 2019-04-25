@@ -1,71 +1,27 @@
-#include "TaskQueue.h"
+Ôªø#include "TaskQueue.h"
 
 TaskQueue::TaskQueue(int q,bool verbose){
 	v = verbose;
 	quescap = q;
 }
 
-void TaskQueue::add_task(const char *name, int p, int workday,task d) {
-	d.name = name;
-	d.priority = p;
-	d.workday = workday;
-	task_vector.push_back(d);
-	std::sort(task_vector.begin(), task_vector.end(), [](const task &v1, const task &v2) {return v1.priority < v2.priority; });
+void TaskQueue::add_task(const char *name, int p,task obj){
+	obj.make_task(name, p);
+	task_vector.push_back(obj);
+	std::sort(task_vector.begin(), task_vector.end(), [](task &v1, task &v2) {return v1.task_priority() < v2.task_priority(); });
 }
 
-bool TaskQueue::run(std::thread::id this_id) {
-	srand(time(NULL));
-	int k = 0;
-
-	if (task_vector.empty() == true) {
-		return false;
-	}
-
-	for (int i = 0; i < (1 + rand() % quescap); i++){
-		sz = function_queue.size();
-		if ((sz + 1) <= quescap) {
-			std::unique_lock<std::mutex> lock_(m_mtx);
-			task t;
-			t = task_vector.back();
-			function_queue.push(t);
-			
-			if (task_vector.empty() != true){
-				task_vector.pop_back();
-			}
-
-			if (v == true) {
-				cout.width(10);
-				cout << this_id << " ƒÓ·‡‚ÎÂÌ‡ Á‡‰‡˜‡ " << k << " " << t.name << " Ò ÔËÓËÚÂÚÓÏ " << t.priority << endl;
-			}
-
-			m_cond.notify_one();
-		}
-		else {
-			if (v == true) {
-				cout.width(10);
-				cout << this_id << " ÕÂ ÏÓ„Û ‰Ó·‡‚ËÚ¸ ‚ Ó˜ÂÂ‰¸ Á‡‰‡˜Û " << k << t.name << " ÚÂÍÛ˘ËÈ ‡ÁÏÂ Ó˜ÂÂ‰Ë ÛÊÂ ‡‚ÂÌ " << sz << endl;
-			}
-			
-			m_cond.notify_one();
-		}
-
-		k = k + 1;
-	}
-
-	function_queue.top();
-	return true;
-}
-
-void TaskQueue::push_to_end(task d, std::thread::id this_id) {
+void TaskQueue::push_to_end(std::thread::id this_id) {
 	bool v = true;
 	sz = function_queue.size();
+	t = function_queue.top();
 	if ((sz + 1) <= quescap) {
 		std::unique_lock<std::mutex> lock_(m_mtx);
 		function_queue.push(t);
 			
 		if (v == true){
 			std::cout.width(10);
-			cout << this_id << " «‡‰‡˜‡ " << t.id_ << " ÔÂÂÏÂ˘ÂÌ‡ ‚ ÍÓÌÂˆ " << endl;
+			cout << this_id << " –ó–∞–¥–∞—á–∞ " << t.task_id() << " –ø–µ—Ä–µ–º–µ—â–µ–Ω–∞ –≤ –∫–æ–Ω–µ—Ü " << endl;
 		}
 
 		lock_.unlock();
@@ -74,7 +30,7 @@ void TaskQueue::push_to_end(task d, std::thread::id this_id) {
 	
 	else {
 		if (v == true){
-			cout << " ÕÂ ÏÓ„Û ‰Ó·‡‚ËÚ¸ ‚ Ó˜ÂÂ‰¸ Á‡‰‡˜Û " << t.id_ << " ÚÂÍÛ˘ËÈ ‡ÁÏÂ Ó˜ÂÂ‰Ë " << sz << endl;
+			cout << " –ù–µ –º–æ–≥—É –¥–æ–±–∞–≤–∏—Ç—å –≤ –æ—á–µ—Ä–µ–¥—å –∑–∞–¥–∞—á—É " << t.task_id() << " —Ç–µ–∫—É—â–∏–π —Ä–∞–∑–º–µ—Ä –æ—á–µ—Ä–µ–¥–∏ " << sz << endl;
 		}
 	}
 
@@ -88,33 +44,88 @@ void TaskQueue::print(int mode, std::thread::id this_id) {
 
 		if (mode == 1) {
 			cout.width(10);
-			cout << "œÓÚÓÍ " << this_id << " Á‡Ô‡¯Ë‚‡ÂÚ Á‡‰‡˜Û" << endl;
+			cout << "–ü–æ—Ç–æ–∫ " << this_id << " –∑–∞–ø—Ä–∞—à–∏–≤–∞–µ—Ç –∑–∞–¥–∞—á—É" << endl;
 		}
 
 		if (mode == 2) {
 			cout.width(10);
-			cout << "œÓÚÓÍ " << this_id << " ÔÓÎÛ˜ËÎ Á‡‰‡˜Û" << endl;
+			cout << "–ü–æ—Ç–æ–∫ " << this_id << " –ø–æ–ª—É—á–∏–ª –∑–∞–¥–∞—á—É" << endl;
 		}
 
 		if (mode == 3) {
 			cout.width(10);
-			cout << "œÓÚÓÍ " << this_id << " ÌÂ ÔÓÎÛ˜ËÎ Á‡‰‡˜Û" << endl;
+			cout << "–ü–æ—Ç–æ–∫ " << this_id << " –Ω–µ –ø–æ–ª—É—á–∏–ª –∑–∞–¥–∞—á—É" << endl;
 		}
 	}
 
 task TaskQueue::give_task() {
 	function_queue.top();
-	task d = function_queue.top();
-	return d;
+	t = function_queue.top();
+	return t;
 }
 
-bool TaskQueue::empty() {
-	bool val = function_queue.empty();
-	return val;
+int TaskQueue::task_id(){
+	return give_task().task_id();
+}
+
+string TaskQueue::task_name() {
+	return give_task().task_name();
+}
+
+std::function<void(int id)> *TaskQueue::task_f(){
+	return give_task().task_func();
+}
+
+bool TaskQueue::empty(std::thread::id this_id){
+	bool val1 = function_queue.empty();
+	bool val2 = task_vector.empty();
+	return val1;
+}
+
+void TaskQueue::push(int k) {
+	sz = function_queue.size();
+	if ((sz + 1) <= quescap){
+		std::unique_lock<std::mutex> lock_(m_mtx);
+		t = task_vector.back();
+		function_queue.push(t);
+
+		if (check_task_vector() != true) {
+			task_vector.pop_back(); /// —É–¥–∞–ª–∏—Ç—å –∑–∞–¥–∞—á—É –∏–∑ –ø—É–ª–∞ –∑–∞–¥–∞—á
+		}
+
+		//if (v == true) {
+			cout.width(10);
+			cout << " –î–æ–±–∞–≤–ª–µ–Ω–∞ –∑–∞–¥–∞—á–∞ " << k << " " << t.task_name() << " —Å –ø—Ä–∏–æ—Ä–∏—Ç–µ—Ç–æ–º " << t.task_priority() << endl;
+		//}
+			m_cond.notify_one();
+	}
+	else {
+		if (v == true) {
+			cout.width(10);
+			//cout << this_id << " √ç√• √¨√Æ√£√≥ √§√Æ√°√†√¢√®√≤√º √¢ √Æ√∑√•√∞√•√§√º √ß√†√§√†√∑√≥ " << k << t.task_name() << " √≤√•√™√≥√π√®√© √∞√†√ß√¨√•√∞ √Æ√∑√•√∞√•√§√® √≥√¶√• √∞√†√¢√•√≠ " << sz << endl;
+		}
+
+		m_cond.notify_one();
+	}
 }
 
 void TaskQueue::pop() {
 	std::unique_lock<std::mutex> lock_(m_mtx);
-	function_queue.pop();
+	if (size_function_queue()> 0){
+		function_queue.pop();
+	}
 	m_cond.notify_one();
 }
+
+bool TaskQueue::check_task_vector() {
+	return task_vector.empty();
+}
+
+int TaskQueue::return_quescap(){
+	return quescap;
+}
+
+size_t TaskQueue::size_function_queue() {
+	return function_queue.size();
+}
+
