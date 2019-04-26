@@ -19,6 +19,7 @@ Thread_pool::Thread_pool(int w,bool verbose) : lock(), data_condition(), active(
 	for (int i = 0; i < workers; i++) {
 		vector_thread_pool.emplace_back(std::thread(&Thread_pool::simple_run, this));
 	}
+	v = verbose;
 }
 
 Thread_pool::~Thread_pool() {
