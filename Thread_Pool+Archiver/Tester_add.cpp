@@ -71,18 +71,18 @@ void Testing_class::create_file(int p, vector<string> &filenames) {
 	if (p != 0) {
 		archname = creativer() + ".tar";
 		cout << archname << endl;
-		filenames.push_back(archname.c_str());
+		filenames.push_back(archname.c_str());//первый элемент вектора имя архива
 		file_amount = 1 + rand() % 10;
 		filenames.resize(file_amount);
 
 		for (i = 0; i < file_amount; i++) {
-			str1 = creativer();
+			str1 = creativer();//имя файла
 			str1 = str1 + ".txt";
 			filenames.push_back(str1);
 			out.open(str1);
-			text_amount = 1 + rand() % 250;
+			text_amount = 1 + rand() % 250;//количество случайных строк
 			for (j = 0; j < text_amount; j++) {
-				str2 = creativer();
+				str2 = creativer();//строка
 				out << str2 << endl;
 			}
 			out.close();
@@ -92,7 +92,7 @@ void Testing_class::create_file(int p, vector<string> &filenames) {
 		archname = test_vector[0].c_str();
 		filenames.push_back(archname.c_str());
 		filenames.resize(file_amount);
-		file_amount = test_vector.size() - 2;
+		file_amount = test_vector.size() - 2;//первый и последний выкидываем
 		for (size_t i = 1; i < test_vector.size() - 1; i++) {
 			filenames.push_back(test_vector[i].c_str());
 		}
@@ -115,7 +115,7 @@ void Testing_class::creation_function(int p) {
 	LZW_archiver myar(test_vector[0].c_str(), 0);
 	own_archiver o_ar;
 	lib_archiver l_ar;
-
+	
 	for (size_t i = 1; i < test_vector.size() - minus; i++) {
 		if (test_vector[i].length() > 0) {
 			size_before = size_before + filesize(test_vector[i].c_str());
@@ -125,12 +125,12 @@ void Testing_class::creation_function(int p) {
 			}
 
 			if (p == 2 || test_vector.back() == "2") {
-				//o_ar.compress(test_vector[i], ("temp_" + test_vector[i]).c_str());
+				o_ar.compress(test_vector[i].c_str(), ("temp_" + test_vector[i]).c_str());
 				myar.add_to_archive(("temp_" + test_vector[i]).c_str());
 			}
 
 			if (p == 3 || test_vector.back() == "3") {
-				//l_ar.compress(test_vector[i].c_str(), ("temp_" + test_vector[i]).c_str());
+				l_ar.compress(test_vector[i].c_str(), ("temp_" + test_vector[i]).c_str());
 				myar.add_to_archive(("temp_" + test_vector[i]).c_str());
 			}
 		}
@@ -139,7 +139,7 @@ void Testing_class::creation_function(int p) {
 	myar.close();
 }
 bool Testing_class::extraction_function(int p) {
-	LZW_archiver lzw(test_vector[0].c_str(), 0);
+	LZW_archiver lzw(test_vector[0].c_str(), 1);
 	own_archiver o_ar;
 	lib_archiver l_ar;
 
@@ -162,7 +162,7 @@ bool Testing_class::extraction_function(int p) {
 			}
 
 			if (p == 2 || test_vector.back() == "2") {
-				//o_ar.decompress(("temp_" + test_vector[i]).c_str(), ("res_" + test_vector[i]).c_str());
+				o_ar.decompress(("temp_" + test_vector[i]).c_str(), ("res_" + test_vector[i]).c_str());
 				if (isFilesEqual(test_vector[i].c_str(), ("res_" + test_vector[i]).c_str()) != true) {
 					return false;
 				};
@@ -170,15 +170,105 @@ bool Testing_class::extraction_function(int p) {
 			}
 
 			if (p == 3 || test_vector.back() == "3") {
-				//l_ar.decompress(("temp_" + test_vector[i]).c_str(), ("res_" + test_vector[i]).c_str());
+				l_ar.decompress(("temp_" + test_vector[i]).c_str(), ("res_" + test_vector[i]).c_str());
 				size_after = size_after + filesize(("res_" + test_vector[i]).c_str());
 			}
 		}
 	}
 }
 
+/*-------------------------------------------------------*/
+
 void write(int i, const char *in, int count) {
-	for (int i = 0; i < count; i++) {
+	for (int k = 0; k < count; k++) {
 		cout << in;
 	}
+}
+void function_block(TaskQueue &queue) {
+	task t1, t2, t3, t4, t5, t6, t7, t8;
+	t1.add_function(compress_own, "newarch.tar", "in1.txt", "tempfile1.txt", "tempfile2.txt", "in2.txt");
+	t2.add_function(extract, "newarch.tar");
+	t3.add_function(decompress_own, "newarch.tar", "tempfile1.txt", "tempfile2.txt", "res1.txt", "res2.txt");
+	t4.add_function(comp, "in1.txt", "in2.txt", "res1.txt", "res2.txt");
+
+	t5.add_function(compress_own, "newarch2.tar", "in1.txt", "tempfile1.txt", "tempfile2.txt", "in2.txt");
+	t6.add_function(extract, "newarch2.tar");
+	t7.add_function(decompress_own, "newarch2.tar", "tempfile1.txt", "tempfile2.txt", "res1_lib.txt", "res2_lib.txt");
+	t8.add_function(comp, "in1.txt", "in2.txt", "res1_lib.txt", "res2_lib.txt");
+
+	queue.add_task("Add and Compress (own)", 5, t1);
+	queue.add_task("Add and Compress (lib)", 5, t5);
+	queue.add_task("Extract (own)", 4, t2);
+	queue.add_task("Extract (lib)", 4, t6);
+	queue.add_task("Decompress_own", 3, t3);
+	queue.add_task("Decompress_lib", 3, t7);
+}
+void removing(const char *name, const char *in1, const char *in2, const char *in3) {
+	remove(name);
+	remove(in1);
+	remove(in2);
+	remove(in3);
+	remove("tmpfile2.txt");
+}
+void extract(int i, const char *name) {
+	LZW_archiver myar(name, 1);
+	myar.extract(name);
+}
+void compress_own(int i, const char *name, const char *file1, const char *file_tmp1, const char *file_tmp2, const char *file2) {
+	LZW_archiver myar(name, 0);
+	own_archiver o_ar;
+	o_ar.compress(file1, file_tmp1);
+	o_ar.compress(file2, file_tmp2);
+
+	myar.add_to_archive(file_tmp1);
+	myar.add_to_archive(file_tmp2);
+	myar.close();
+	return;
+}
+void compress_lib(int i, const char *name, const char *file1, const char *file_tmp1, const char *file_tmp2, const char *file2) {
+	LZW_archiver myar(name, 0);
+	lib_archiver l_ar;
+	l_ar.compress(file1, file_tmp1);
+	l_ar.compress(file2, file_tmp2);
+
+	myar.add_to_archive(file_tmp1);
+	myar.add_to_archive(file_tmp2);
+	myar.close();
+	return;
+}
+void decompress_own(int i, const char *name, const char *file_in1, const char *file_in2, const char *file_out1, const char *file_out2) {
+	own_archiver o_ar;
+	o_ar.decompress(file_in1, file_out1);
+	o_ar.decompress(file_in2, file_out2);
+	return;
+}
+void decompress_lib(int i, const char *name, const char *file_in1, const char *file_in2, const char *file_out1, const char *file_out2) {
+	lib_archiver l_ar;
+	l_ar.decompress(file_in1, file_out1);
+	l_ar.decompress(file_in2, file_out2);
+	return;
+}
+void comp(int i, const char *file1, const char *file2, const char *file_res1, const char *file_res2) {
+	Testing_class obj;
+	if (obj.isFilesEqual(file1, file_res1) == true) {
+		cout << file1 << "~" << file_res1 << endl;
+	}
+	else {
+		cout << file1 << "not ~" << file_res1 << endl;
+	}
+}
+void void_task(int i,int a,int b,int n, const char *text){
+	cout << "Calculate" << endl;
+	for (int k = 0; k < n; k++) {
+		a = a*b;
+	}
+	cout << text << " " << a;
+}
+int int_task(int i,int a, int b) {
+	cout << a + b << endl;
+	return (a + b);
+}
+string string_test(int i, const char *str1, const char *str2) {
+	cout << str1 << " " << str2 << endl;
+	return str1;
 }
