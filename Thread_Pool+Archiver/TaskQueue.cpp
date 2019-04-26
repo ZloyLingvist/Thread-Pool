@@ -93,16 +93,17 @@ void TaskQueue::push(int k) {
 			task_vector.pop_back(); /// удалить задачу из пула задач
 		}
 
-		//if (v == true) {
+		if (v == true) {
 			cout.width(10);
 			cout << " Добавлена задача " << k << " " << t.task_name() << " с приоритетом " << t.task_priority() << endl;
-		//}
-			m_cond.notify_one();
+		}
+		
+		m_cond.notify_one();
 	}
 	else {
 		if (v == true) {
 			cout.width(10);
-			//cout << this_id << " Íå ìîãó äîáàâèòü â î÷åðåäü çàäà÷ó " << k << t.task_name() << " òåêóùèé ðàçìåð î÷åðåäè óæå ðàâåí " << sz << endl;
+			cout << " Не могу добавить задачу " << k << t.task_name() << " размер очереди " << sz << endl;
 		}
 
 		m_cond.notify_one();
@@ -134,9 +135,11 @@ void TaskQueue::simple_run(){
 	while (check_task_vector() != true) {
 		push(k);
 		(*task_f())(task_id());
-		std::cout << " Задача " << task_name()<<" выполнена " << std::endl;
+		if (v == true){
+			cout.width(10);
+			cout << " Задача " << (k + 1) << " " << task_name() << " выполнена " << endl;
+		}
 		pop();
 		k = k + 1;
 	}
-	cout << "Finished" << endl;
 }

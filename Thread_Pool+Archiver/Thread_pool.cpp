@@ -10,15 +10,14 @@ Thread_pool::Thread_pool(int w, TaskQueue &obj, bool verbose) : lock(), data_con
 		vector_thread_pool.emplace_back(std::thread(&Thread_pool::work, this, std::ref(obj)));
 	}
 	
-	std::thread::id main_thread_id = std::this_thread::get_id();
-	run(obj,main_thread_id);
+	run(obj);
 	v = verbose;
 }
 
-Thread_pool::Thread_pool(int w, vector<std::function<void()>> myv, bool verbose) : lock(), data_condition(), active(true), vector_thread_pool() {
+Thread_pool::Thread_pool(int w,bool verbose) : lock(), data_condition(), active(true), vector_thread_pool(){
 	workers = w;
 	for (int i = 0; i < workers; i++) {
-		vector_thread_pool.emplace_back(std::thread(&Thread_pool::simple_run, this, std::ref(myv)));
+		vector_thread_pool.emplace_back(std::thread(&Thread_pool::simple_run, this));
 	}
 }
 
@@ -48,7 +47,7 @@ void Thread_pool::work(TaskQueue &obj){
 
 			if (!active && obj.empty(this_id)) {
 				obj.print(1, this_id);
-				if (run(obj,this_id)==false){
+				if (run(obj)==false){
 					cout << "Задач для " << this_id << " нет" << endl;
 					return;
 				}
@@ -95,8 +94,8 @@ void Thread_pool::work(TaskQueue &obj){
 		}	
 	}
 }
-	
-bool Thread_pool::run(TaskQueue &obj,std::thread::id this_id) {
+
+bool Thread_pool::run(TaskQueue &obj) {
 	int k = 0;
 	if (obj.check_task_vector() == true) {
 		return false;
@@ -110,9 +109,9 @@ bool Thread_pool::run(TaskQueue &obj,std::thread::id this_id) {
 	return true;
 }
 
-void Thread_pool::simple_run(vector<std::function<void()>> myv) {
+void Thread_pool::simple_run() {
 	bool v = true;
-	std::function<void()> func;
+	std::function<void(int id)> *func;
 	task d;
 	int id = 0;
 	int error = 0;
@@ -123,7 +122,7 @@ void Thread_pool::simple_run(vector<std::function<void()>> myv) {
 	while (true) {
 		{
 			std::unique_lock<std::mutex> lock_(lock);
-			data_condition.wait(lock_, [this_id, this, &myv]() {
+			data_condition.wait(lock_, [this_id, this]() {
 				cout << endl;
 				return !myv.empty() || !active;
 			});
@@ -143,7 +142,7 @@ void Thread_pool::simple_run(vector<std::function<void()>> myv) {
 		}
 
 		try {
-			func();
+			(*func)(id);
 			cout.width(10);
 			std::cout << this_id << " Задача " << name << " выполнена " << std::endl;
 		}
@@ -154,3 +153,4 @@ void Thread_pool::simple_run(vector<std::function<void()>> myv) {
 		}
 	}
 }
+
