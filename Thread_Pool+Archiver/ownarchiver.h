@@ -4,17 +4,18 @@
 
 /**
 * @file ownarchiver.h
-* @brief Описание тестового класса
+* @brief РЎР¶Р°С‚РёРµ Р°Р»РіРѕСЂРёС‚РјРѕРј LZW. РџРѕРґСЂРѕР±РЅРѕРµ РѕРїРёСЃР°РЅРёРµ http://mf.grsu.by/UchProc/livak/po/comprsite/theory_lzw.html
+
 */
 
 struct dictionary{
-	int code_value;
-	int prefix_code;
-	char character;
+	int code_value;///< РєРѕРґ Р·РЅР°С‡РµРЅРёСЏ
+	int prefix_code;///< РєРѕРґ С„СЂР°Р·С‹
+	char character;///< СЃРёРјРІРѕР»
 };
 
 struct bi_file{
-	/*! Побитовый доступ к файлам
+	/*! РџРѕР±РёС‚РѕРІС‹Р№ РґРѕСЃС‚СѓРї Рє С„Р°Р№Р»Р°Рј
 	*/
 	FILE *file;
 	unsigned char mask;
@@ -24,31 +25,39 @@ struct bi_file{
 
 class ownarchiver :public Tar {
 protected:
-	static constexpr size_t BITS = 12; //количество битов в коде 
-	static constexpr size_t MAX_CODE = ((1 << BITS) - 1);//максимальное значение кода
-	static constexpr size_t TABLE_SIZE = 5021; //размер словаря элементов
-	static constexpr size_t end_of_stream = 256; //код конца потока
-	static constexpr size_t FIRST_CODE = 257; //значение кода получаемое первой добавленной в словарь фразой
-	static constexpr size_t UNUSED = -1;//признак свободной ячейки в словаре
+	static constexpr size_t BITS = 12;
+	static constexpr size_t MAX_CODE = ((1 << BITS) - 1);
+	static constexpr size_t TABLE_SIZE = 5021;
+	static constexpr size_t end_of_stream = 256;
+	static constexpr size_t FIRST_CODE = 257;
+	static constexpr size_t UNUSED = -1;
 	static constexpr size_t PACIFIER_COUNT = 2047;
 	static constexpr size_t CHUNK = 4096;
 	static constexpr size_t dict_size = 5024;
 public:
-	char decode_stack[TABLE_SIZE];
+	char decode_stack[TABLE_SIZE];//СЃС‚РµРє РґР»СЏ РґРµРєРѕРґРёСЂРѕРІР°РЅРёСЏ 
 	ownarchiver() = default;
 	~ownarchiver() = default;
 	int compress(const char* in, const char* out) override;
 	int decompress(const char* in, const char* out) override;
 
+	/*! РѕС‚РєСЂС‹С‚РёРµ С„Р°Р№Р»Р° РґР»СЏ РїРѕР±РёС‚РѕРІРѕР№ Р·Р°РїРёСЃРё
+	*/
 	std::shared_ptr<bi_file> Open_File(const char *name, const char *mode);
+
+
 	void Close_File(std::shared_ptr<bi_file> b, int mode);
 
 	void WriteBits(std::shared_ptr<bi_file> bfile, unsigned long code, int count);
 	unsigned long ReadBits(std::shared_ptr<bi_file> bfile, int bit_count);
 
-	/*! процедура поиска в словаре указанной пары (код фразы, символ).
-	используеться hash , получаемый из параметров
+	/*! РїСЂРѕС†РµРґСѓСЂР° РїРѕРёСЃРєР° РІ СЃР»РѕРІР°СЂРµ СѓРєР°Р·Р°РЅРЅРѕР№ РїР°СЂС‹ (РєРѕРґ С„СЂР°Р·С‹, СЃРёРјРІРѕР»).
+	РёСЃРїРѕР»СЊР·СѓРµС‚СЊСЃСЏ С…РµС€, РїРѕР»СѓС‡Р°РµРјС‹Р№ РёР· РїР°СЂР°РјРµС‚СЂРѕРІ
 	*/
 	unsigned int find_dictionary_match(int prefix_code, int character, dictionary *dict);
+	
+	/*!
+	Р”РµРєРѕРґРёСЂРѕРІР°РЅРёРµ СЃС‚СЂРѕРєРё. РїСЂРѕС†РµРґСѓСЂР° СЂР°Р·РјРµС‰Р°РµС‚ СЃРёРјРІРѕР»С‹ РІ СЃС‚РµРєРµ, РІРѕР·РІСЂР°С‰Р°СЏ РёС… РєРѕР»РёС‡РµСЃС‚РІРѕ
+	*/
 	unsigned int decode_string(unsigned int count, unsigned int code, dictionary *dict);
 };

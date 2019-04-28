@@ -87,34 +87,27 @@ int ownarchiver::compress(const char *in,const char *out) {
 		dict[i].code_value = UNUSED;
 	}
 
-	/* считать первый символ */
 	if ((string_code = getc(input)) == EOF) {
 		string_code = end_of_stream;
 	}
 
-	/* пока не конец сообщени€ */
 	while ((character = getc(input)) != EOF) {
-		// попытка найти в словаре фразу <фраза*, символ>
 		index = find_dictionary_match(string_code, character,dict);
-		/* соответствие найдено*/
 		if (dict[index].code_value != -1) {
 			string_code = dict[index].code_value;
 		}
 		else {
-			/* добавление в словарь */
 			if (next_code <= MAX_CODE) {
 				dict[index].code_value = next_code++;
 				dict[index].prefix_code = string_code;
 				dict[index].character = static_cast<char>(character);
 			}
 
-			/* выдача кода */
 			WriteBits(b_file, static_cast<std::make_unsigned<long>::type>(string_code), BITS);
 			string_code = character;
 		}
 	}
 
-	/* завершение кодировани€ */
 	WriteBits(b_file, static_cast<std::make_unsigned<long>::type>(string_code), BITS);
 	WriteBits(b_file, static_cast<std::make_unsigned<long>::type>(end_of_stream), BITS);
 	Close_File(b_file, 0);
@@ -148,7 +141,6 @@ int ownarchiver::decompress(const char* in,const char* out) {
 	putc(old_code, output);
 
 	while ((new_code = static_cast<unsigned int>(ReadBits(b_file, BITS))) != end_of_stream) {
-		/* обработка неожиданной ситуации */
 		if (new_code >= next_code) {
 			decode_stack[0] = static_cast<char>(character);
 			count = decode_string(1, old_code,dict);
@@ -158,12 +150,11 @@ int ownarchiver::decompress(const char* in,const char* out) {
 		}
 
 		character = decode_stack[count - 1];
-		/* выдача раскодированной строки */
+
 		while (count > 0) {
 			putc(decode_stack[--count], output);
 		}
 
-		/* обновление словар€ */
 		if (next_code <= MAX_CODE) {
 			dict[next_code].prefix_code = old_code;
 			dict[next_code].character = static_cast<char>(character);
@@ -184,9 +175,7 @@ unsigned int ownarchiver::find_dictionary_match(int prefix_code, int character,d
 	int index;
 	int offset;
 
-	/* получение значени€ hash функции */
 	index = (character << (BITS - 8)) ^ prefix_code;
-	/* разрешение возможных коллизий */
 
 	if (index == 0) {
 		offset = 1;
@@ -196,7 +185,6 @@ unsigned int ownarchiver::find_dictionary_match(int prefix_code, int character,d
 	}
 
 	while (true) {
-		/* €чейка словар€ не использована */
 		if (dict[index].code_value == UNUSED) {
 			return index;
 		}
@@ -213,8 +201,8 @@ unsigned int ownarchiver::find_dictionary_match(int prefix_code, int character,d
 }
 
 unsigned int ownarchiver::decode_string(unsigned int count, unsigned int code, dictionary *dict) {
-	/* пока не встретитсь€ код символа */
-	while (code > 255){
+	while (code > 255) 
+	{
 		decode_stack[count++] = dict[code].character;
 		code = dict[code].prefix_code;
 	}
