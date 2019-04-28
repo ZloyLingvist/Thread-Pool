@@ -1,46 +1,59 @@
 #pragma once
-#include "archive.h"
+#include "archiver.h"
 
-LZW_archiver::LZW_archiver(const char *filename, int mode) : _finished(false) {
-	if (mode == 0) {
-		this->out = std::fopen(filename, "wb");
+tarchiver::tarchiver(const char *filename, const char *mode,int md) : finished(false) {
+	log = md;
+	if (mode == "a"){
+		string my("Archive name is : ");
+		my = my + filename;
+		logging(my.c_str());
+
+		this->out = fopen(filename, "wb");
 		if (out == NULL) {
 			string my(filename);
-			my = "cannot open" + my;
+			my = "Cannot open " + my;
+			logging(my.c_str());
 			throw(my);
 		}
 	}
 
-	this->_closeFile = true;
-	this->_finished = true;
+	this->closeFile = true;
+	this->finished = true;
 	if (sizeof(tarheader) != 512) {
 		throw(sizeof(tarheader));
 	}
+
+	if (mode == "e") {
+		this->extract(filename);
+	}
 }
 
-LZW_archiver:: ~LZW_archiver() {
-	if (!_finished) {
+tarchiver:: ~tarchiver() {
+	if (!finished) {
+		logging("Tar file was not finished.");
 		throw("Tar file was not finished.");
 	}
 }
 
-void LZW_archiver::_init(void* header) {
-	std::memset(header, 0, sizeof(tarheader));
-	std::sprintf(static_cast<tarheader*>(header)->indicator, "ustar  ");
-	std::sprintf(static_cast<tarheader*>(header)->modiftime, "%011lo", time(NULL));
-	std::sprintf(static_cast<tarheader*>(header)->filemode, "%07o", 0777);
-	std::sprintf(static_cast<tarheader*>(header)->groupid, "%s", "users");
+void tarchiver::init(void* header) {
+	memset(header, 0, sizeof(tarheader));
+	sprintf(static_cast<tarheader*>(header)->indicator, "ustar  ");
+	sprintf(static_cast<tarheader*>(header)->modiftime, "%011lo", time(NULL));
+	sprintf(static_cast<tarheader*>(header)->filemode, "%07o", 0777);
+	sprintf(static_cast<tarheader*>(header)->groupid, "%s", "users");
 }
 
-void LZW_archiver::_checksum(void* header) {
+void tarchiver::checksum(void* header) {
 	unsigned int sum = 0;
-	char *p = (char *)header;
+	int i = 0;
+	char *p = static_cast<char*>(header);
 	char *q = p + sizeof(tarheader);
+
 	while (p < static_cast<tarheader*>(header)->checksum) {
 		sum += *p++ & 0xff;
 	}
 
-	for (int i = 0; i < 8; ++i) {
+	for (i = 0; i < 8; ++i){
 		sum += ' ';
 		++p;
 	}
@@ -49,78 +62,82 @@ void LZW_archiver::_checksum(void* header) {
 		sum += *p++ & 0xff;
 	}
 
-	std::sprintf(static_cast<tarheader*>(header)->checksum, "%06o", sum);
+	sprintf(static_cast<tarheader*>(header)->checksum, "%06o", sum);
 }
 
-void LZW_archiver::_size(void* header, unsigned long fileSize) {
-	std::sprintf(static_cast<tarheader*>(header)->filesize, "%011llo", (long long unsigned int)fileSize);
+void tarchiver::size(void* header, unsigned long fileSize) {
+	sprintf(static_cast<tarheader*>(header)->filesize, "%011llo", static_cast<long long unsigned int>(fileSize));
 }
 
-void LZW_archiver::_filename(void* header, const char* filename) {
-	if (filename == NULL || filename[0] == 0 || std::strlen(filename) >= 100) {
-		throw(20);
+void tarchiver::filename_(void* header, const char* filename) {
+	if (filename == NULL || filename[0] == 0 || strlen(filename) >= 100){
+		throw("Invalid file name");
 	}
-	sprintf(static_cast<tarheader*>(header)->filename, "%s", filename); // max 100 chars !!!
+	sprintf(static_cast<tarheader*>(header)->filename, "%s", filename); 
 }
 
-void LZW_archiver::_endRecord(std::size_t len) {
+void tarchiver::endRecord(std::size_t len) {
 	char c = '\0';
-	while ((len % sizeof(tarheader)) != 0) {
-		std::fwrite(&c, sizeof(char), sizeof(char), out);
+	while ((len % sizeof(tarheader)) != 0){
+		fwrite(&c, sizeof(char), sizeof(char), out);
 		++len;
 	}
 }
 
-void LZW_archiver::close() {
-	if (!_finished) {
-		_finished = true;
-		tarheader header;
-		std::memset((void*)&header, 0, sizeof(tarheader));
-		std::fwrite((const char*)&header, sizeof(char), sizeof(tarheader), out);
-		std::fwrite((const char*)&header, sizeof(char), sizeof(tarheader), out);
+void tarchiver::close() {
+	if (!finished) {
+		finished = true;
+		memset(static_cast<void*>(&header), 0, sizeof(tarheader));
+		fwrite(static_cast<char*>(static_cast<void*>(&header)), sizeof(char), sizeof(tarheader), out);
+		fwrite(static_cast<char*>(static_cast<void*>(&header)), sizeof(char), sizeof(tarheader), out);
 	}
-	if (this->_closeFile) std::fclose(this->out);
+	if (this->closeFile){
+		fclose(this->out);
+	}
 }
 
 
-void LZW_archiver::add_to_archive(const char* filename) {
-	std::FILE* in = std::fopen(filename, "rb");
+void tarchiver::add_to_archive(const char* filename) {
+	FILE* in = std::fopen(filename, "rb");
+	char buff[BUFSIZ];
+	unsigned long int total = 0;
+	size_t nRead = 0;
+
 	if (in == NULL) {
 		throw(10);
 	}
 
-	std::fseek(in, 0L, SEEK_END);
-	long int len = std::ftell(in);
-	std::fseek(in, 0L, SEEK_SET);
+	fseek(in, 0L, SEEK_END);
+	long int len = ftell(in);
+	fseek(in, 0L, SEEK_SET);
 
-	tarheader header;
-	_init((void*)&header);
-	_filename((void*)&header, filename);
+	init(static_cast<void*>(&header));
+	filename_(static_cast<void*>(&header), filename);
 	header.filetype[0] = 0;
-	_size((void*)&header, len);
-	_checksum((void*)&header);
-	std::fwrite((const char*)&header, sizeof(char), sizeof(tarheader), out);
+	size(static_cast<void*>(&header), len);
+	checksum(static_cast<void*>(&header));
+	std::fwrite(static_cast<char*>(static_cast<void*>(&header)), sizeof(char), sizeof(tarheader), out);
 
-	char buff[BUFSIZ];
-	unsigned long int total = 0;
-	std::size_t nRead = 0;
-	while ((nRead = std::fread(buff, sizeof(char), BUFSIZ, in)) > 0) {
-		std::fwrite(buff, sizeof(char), nRead, out);
+	while ((nRead = fread(buff, sizeof(char), BUFSIZ, in)) > 0){
+		fwrite(buff, sizeof(char), nRead, out);
 		total = total + nRead;
 	}
 
 	std::fclose(in);
-	_endRecord(total);
+	string my("Add to archive: ");
+	my = my + filename;
+	logging(my.c_str());
+	endRecord(total);
 }
 
-long int LZW_archiver::fileLength(std::FILE *file) {
-	std::fseek(file, 0L, SEEK_END);
+long int tarchiver::fileLength(std::FILE *file) {
+	fseek(file, 0L, SEEK_END);
 	long int len = std::ftell(file);
-	std::fseek(file, 0L, SEEK_SET);
+	fseek(file, 0L, SEEK_SET);
 	return len;
 }
 
-int LZW_archiver::parseoct(const char *p, size_t n) {
+int tarchiver::parseoct(const char *p, size_t n) {
 	int i = 0;
 	while ((*p < '0' || *p > '7') && n > 0) {
 		++p;
@@ -133,20 +150,22 @@ int LZW_archiver::parseoct(const char *p, size_t n) {
 		++p;
 		--n;
 	}
-	return (i);
+	return i;
 }
 
-int LZW_archiver::is_end_of_archive(const char *p) {
-	int n;
-	for (n = 511; n >= 0; --n)
-		if (p[n] != '\0')
-			return (0);
+int tarchiver::is_end_of_archive(const char *p) {
+	int n = 0;
+	for (n = 511; n >= 0; --n){
+		if (p[n] != '\0'){
+			return 0;
+		}
+	}
 	return 1;
 }
 
 
-FILE *LZW_archiver::create_file(char *name) {
-	FILE *f;
+FILE *tarchiver::create_file(char *name) {
+	FILE *f=NULL;
 	f = fopen(name, "wb+");
 	if (f == NULL) {
 		char *p = strrchr(name, '/');
@@ -157,60 +176,64 @@ FILE *LZW_archiver::create_file(char *name) {
 	return f;
 }
 
-int LZW_archiver::verify_checksum(const char *p) {
-	int n, u = 0;
-	for (n = 0; n < 512; ++n) {
-		if (n < 148 || n > 155)
-			u += ((unsigned char *)p)[n];
-		else
+int tarchiver::verify_checksum(char *p) {
+	int n=0, u = 0;
+	for (n = 0; n < 512; ++n){
+		if (n < 148 || n > 155){
+			u += (reinterpret_cast<unsigned char*>(p))[n];
+		}
+		else {
 			u += 0x20;
-
+		}
 	}
 	return (u == parseoct(p + 148, 8));
 }
 
 
-void LZW_archiver::untar(FILE *a, const char *name) {
+void tarchiver::untar(FILE *a, const char *name) {
 	char buff[512];
 	FILE *f = NULL;
 	size_t bytes_read;
-	int filesize;
+	int filesize=0;
+	string my(name);
 
-	cout << "Extracting from " << name << endl;
+	logging(("Extracting from " + my).c_str());
+
 	while (true) {
 		bytes_read = fread(buff, 1, 512, a);
 
-		if (bytes_read < 512) {
+		if (bytes_read < 512){
 			return;
 		}
 
 		if (is_end_of_archive(buff)) {
-			cout << "End of " << name << endl;
+			logging(("End of " + my).c_str());
 			return;
 		}
 
 		if (!verify_checksum(buff)) {
-			cout << "Checksum failure" << endl;
+			logging("Checksum failure");
 			return;
 		}
 
 		filesize = parseoct(buff + 124, 12);
-		cout << " Extracting file " << buff << endl;
+		string my(buff);
+		logging(("Extracting file " + my).c_str());
 		f = create_file(buff);
 
-		while (filesize > 0) {
+		while (filesize > 0){
 			bytes_read = fread(buff, 1, 512, a);
-			if (bytes_read < 512) {
+			if (bytes_read < 512){
 				return;
 			}
 
-			if (filesize < 512) {
+			if (filesize < 512){
 				bytes_read = filesize;
 			}
 
 			if (f != NULL) {
 				if (fwrite(buff, 1, bytes_read, f) != bytes_read) {
-					cout << "Failed write " << endl;
+					logging("Failed write ");
 					fclose(f);
 					f = NULL;
 				}
@@ -226,11 +249,12 @@ void LZW_archiver::untar(FILE *a, const char *name) {
 	}
 }
 
-int LZW_archiver::extract(const char *tarFileName) {
+int tarchiver::extract(const char *tarFileName) {
 	FILE *a;
 	a = fopen(tarFileName, "rb");
 	if (a == NULL) {
-		cout << "Unable to open " << tarFileName<< endl;
+		string my(tarFileName);
+		logging(("Unable to open "+my).c_str());
 	}
 
 	else {
@@ -239,4 +263,17 @@ int LZW_archiver::extract(const char *tarFileName) {
 	}
 
 	return 0;
+}
+
+void tarchiver::logging(const char *msg) {
+	if (log == 0) {
+		ofstream fout_log;
+		fout_log.open("log.txt", std::ios_base::app);
+		fout_log << msg << endl;
+		fout_log.close();
+	}
+
+	if (log == 1) {
+		cout << msg << endl;
+	}
 }

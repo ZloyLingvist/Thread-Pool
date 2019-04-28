@@ -1,70 +1,72 @@
 #include "tester.h"
 #include "TaskQueue.h"
-#include "Thread_pool.h"
+#include "Threadpool.h"
 
 bool Testing_class::test_1(int p){
 	if (p == 1) {
-		cout << endl << "--[Archiver creation test]--" << endl;
+		logging("--[Archiver creation test]--");
 	}
 
-	creation_function(p);
-	cout << "Archive " << test_vector[0] << endl;
+	creation_function(p,log_test);
+	string my(test_vector[0]);
+	logging(("Archive "+my).c_str());
+
 	if (exists(test_vector[0].c_str()) == false){
 		return false;
 	}
 
 	size_before = 0;
-	test_vector.clear();
+	cleaner();
 	return true;
 }
 
 bool Testing_class::test_2(int p) {
 	if (p == 1) {
-		creation_function(4);
+		creation_function(4,log_test);
 	}
 	else {
 		if (p == 2) {
-			cout << "--[Test on extraction]--" << endl;
+			logging("--[Test on extraction]--");
 		}
-		creation_function(p);
+		creation_function(p,log_test);
 	}
 
-	cout << "Archive " << test_vector[0] << endl;
+	string my(test_vector[0]);
+	logging(("Archive " + my).c_str());
 	
-	bool val = extraction_function(p);
+	bool val = extraction_function(p,log_test);
 	
 	if (val == false) {
 		return false;
 	}
 
-	cout << size_after << "|" << size_before << endl;
 	if (size_after != size_before) {
 		return false;
 	}
 
-	test_vector.clear();
+	cleaner();
 	return true;
 }
 bool Testing_class::sub_test_3() {
-	cout << "User Test" << endl;
-	creation_function(0);
-	cout << test_vector.back();
+	logging("User_test");
+
+	creation_function(0,log_test);
+	
 	if (exists(test_vector[0].c_str()) == false) {
 		return false;
 	}
 
-	bool val = extraction_function(0);
+	bool val = extraction_function(0, log_test);
 
 	if (val == false) {
 		return false;
 	}
 
-	cout << size_after << "|" << size_before << endl;
 	if (size_after!=size_before){
 		return false;
 	}
 
-	test_vector.clear();
+	cleaner();
 	return true;
 }
 
@@ -80,9 +82,10 @@ bool Testing_class::test_5(const char* in, const char* out) {
 bool Testing_class::test_7(int q) {
 	bool v = false;
 	TaskQueue queue(q, v);
-	cout << endl << "--[TestQueue without ThreadPool]--" << endl;
+	logging("--[TestQueue without ThreadPool]--");
+
 	try {
-		function_block(queue);
+		function_block(queue, log_test);
 		queue.simple_run();
 		return true;
 	}
@@ -93,9 +96,9 @@ bool Testing_class::test_7(int q) {
 
 bool Testing_class::test_8(int w) {
 	bool v = false;
-	cout << endl << "--[ ThreadPool without TaskQueue ]-- " << endl;
+	logging("--[ThreadPool without TestQueue ]--");
 	try {
-		Thread_pool thread_pool(w,v);
+		Threadpool thread_pool(w,v);
 		thread_pool.add_function(void_task,5,4,40,"stroka");
 		thread_pool.add_function(int_task,10,200);
 		thread_pool.add_function(string_test, "10", "200");
@@ -107,9 +110,8 @@ bool Testing_class::test_8(int w) {
 }
 
 
-
 bool Testing_class::test_9(int w, int q){
-	cout << endl << "--[TaskQueue+Thread_pool (simple)]--" << endl;
+	logging("--[TaskQueue + Thread_pool(simple)]--");
 	try {
 		task t1, t2, t3,t4;
 		bool v = false;
@@ -124,7 +126,7 @@ bool Testing_class::test_9(int w, int q){
 		queue.add_task("T3", 1, t3);
 		queue.add_task("T4", 0, t4);
 
-		Thread_pool thread_pool(w, queue, v);
+		Threadpool thread_pool(w, queue, v);
 		return true;
 	}
 
@@ -134,36 +136,44 @@ bool Testing_class::test_9(int w, int q){
 }
 
 bool Testing_class::test_10(int w,int q){
-	cout << endl << "--[ TaskQueue+Thread_Pool_Archiver]--" << endl;
+	logging("--[TaskQueue + Thread_pool+Archiver]--");
 	try {
-		task t1,t2,t3,t4,t5,t6,t7,t8;
 		bool v = false;
 		TaskQueue queue(q, v);
-
-		t1.add_function(compress_own, "newarch.tar","in1.txt","tempfile1.txt","tempfile2.txt","in2.txt");
-		t2.add_function(extract, "newarch.tar");
-		t3.add_function(decompress_own, "newarch.tar", "tempfile1.txt", "tempfile2.txt", "res1.txt", "res2.txt");
-		//t4.add_function(comp, "in1.txt", "in2.txt","res1.txt","res2.txt");
-
-		t5.add_function(compress_own, "newarch2.tar", "in1.txt", "tempfile1.txt", "tempfile2.txt", "in2.txt");
-		t6.add_function(extract, "newarch2.tar");
-		t7.add_function(decompress_own, "newarch2.tar", "tempfile1.txt", "tempfile2.txt", "res1_lib.txt", "res2_lib.txt");
-		//t8.add_function(comp, "in1.txt", "in2.txt", "res1_lib.txt", "res2_lib.txt");
-		
-		queue.add_task("Add and Compress (own)",5,t1);
-		queue.add_task("Add and Compress (lib)",5,t5);
-		queue.add_task("Extract (own)",4,t2);
-		queue.add_task("Extract (lib)",4,t6);
-		queue.add_task("Decompress_own",3,t3);
-		queue.add_task("Decompress_lib",3,t7);
-		//queue.add_task("Compare",2,t4);
-		//queue.add_task("Compare",1,t8);
-		
-		Thread_pool thread_pool(w, queue, v);
+		function_block(queue, log_test);
+		Threadpool thread_pool(w, queue, v);
 		return true;
 	}
 
 	catch (const std::exception &e) {
 		return false;
 	}
+}
+
+void Testing_class::logging(const char *msg) {
+	if (log_test == 0) {
+		ofstream fout_log_test;
+		fout_log_test.open("log_test.txt", std::ios_base::app);
+		fout_log_test << msg << endl;
+		fout_log_test.close();
+	}
+
+	if (log_test == 1) {
+		cout << msg << endl;
+	}
+}
+
+
+void comp_sub(const char *file1, const char *file_res1,int log) {
+	Testing_class obj(log);
+	if (obj.isFilesEqual(file1, file_res1) == true) {
+		cout << file1 << "~" << file_res1 << endl;
+	}
+	else {
+		cout << file1 << "not ~" << file_res1 << endl;
+	}
+}
+void comp(int i, const char *file1, const char *file2, const char *file_res1, const char *file_res2) {
+	comp_sub(file1, file_res1,1);
+	comp_sub(file2, file_res2,1);
 }

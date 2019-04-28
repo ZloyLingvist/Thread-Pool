@@ -3,6 +3,10 @@
 #include "tar.h"
 #include "quicklz.h"
 
+/**
+* @file libarch.h
+*/
+
 class lib_archiver:public Tar {
 public:
 	lib_archiver() = default;

@@ -1,4 +1,5 @@
-﻿#include "TaskQueue.h"
+#include "TaskQueue.h"
+#include <algorithm>
 
 TaskQueue::TaskQueue(int q,bool verbose){
 	v = verbose;
@@ -76,9 +77,8 @@ std::function<void(int id)> *TaskQueue::task_f(){
 	return give_task().task_func();
 }
 
-bool TaskQueue::empty(std::thread::id this_id){
+bool TaskQueue::empty(){
 	bool val1 = function_queue.empty();
-	bool val2 = task_vector.empty();
 	return val1;
 }
 
@@ -86,11 +86,10 @@ void TaskQueue::push(int k) {
 	sz = function_queue.size();
 	if ((sz + 1) <= quescap){
 		std::unique_lock<std::mutex> lock_(m_mtx);
-		t = task_vector.back();
-		function_queue.push(t);
-
 		if (check_task_vector() != true) {
-			task_vector.pop_back(); /// удалить задачу из пула задач
+			t = task_vector.back();
+			function_queue.push(t);
+			task_vector.pop_back(); 
 		}
 
 		if (v == true) {

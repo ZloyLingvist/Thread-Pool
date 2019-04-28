@@ -1,6 +1,12 @@
 #ifndef QLZ_HEADER
 #define QLZ_HEADER
 
+/*!
+QuickLZ is the world's fastest compression library, reaching 308 Mbyte/s per core.
+Simple to use and easy to integrate. Get done in minutes and continue developing!
+http://www.quicklz.com/
+*/
+
 void quick_compress(const char *in, const char *out);
 void quick_decompress(const char *in, const char *out);
 
