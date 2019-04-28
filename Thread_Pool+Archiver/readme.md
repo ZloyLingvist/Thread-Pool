@@ -55,7 +55,7 @@ void testing_block_2(int w,int q,int log) {
 
 ### Дополнительные зависимости ###
 
-MS Visual Studio 2015
+MS Visual Studio 2015 <br />
 Библиотека quicklz http://www.quicklz.com/
 
 ### Недостатки ###
