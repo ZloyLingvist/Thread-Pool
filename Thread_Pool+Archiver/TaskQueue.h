@@ -9,168 +9,180 @@
 #include <string>
 #include <queue>
 
-using namespace std;
-
 /**
 * @file TaskQueue.h
 * @brief Описание очереди задач и структуры задача
 */
 
-struct task {
+namespace my
+{
+
+struct task
+{
 private:
-	int id_;
-	int priority;
-	string name;
-	bool doing;
-	std::function<void(int id)> *func;
+    int id_ = 0;
+    int priority = 0;
+    std::string name{};
+    bool doing{ false };
+    std::function<void()> func{};
 public:
-	task() = default;
-	~task() = default;
-	/*!
-	Переопределяем оператор для использования в priority_queue
-	*/
-	bool operator<(const task &other) const { return priority > other.priority; }
+    task() = default;
+    ~task() = default;
+    /*!
+    Переопределяем оператор для использования в priority_queue
+    */
+    bool operator<(const task &other) const { return priority > other.priority; }
 
-	/*!
-	Функция нужная для добавления произвольной функции с произвольным числом параметров в task.
-	Недостаток в том, что первый аргумент функции должен быть фиктивным и типа int
-	*/
-	template<typename F, typename... Rest>
-	auto add_function(F && f, Rest&&... rest) ->std::future<decltype(f(0, rest...))> {
-		auto pck = std::make_shared<std::packaged_task<decltype(f(0, rest...))(int)>>(
-			std::bind(std::forward<F>(f), std::placeholders::_1, std::forward<Rest>(rest)...)
-			);
-		auto _f = new std::function<void(int id)>([pck](int id) {
-			(*pck)(id);
-		});
+    /*!
+    Функция нужная для добавления произвольной функции с произвольным числом параметров в task.
+    Недостаток в том, что первый аргумент функции должен быть фиктивным и типа int
+    */
+    template <typename F, typename... Rest>
+    auto add_function(F&& f, Rest&&... rest) -> std::future<typename std::result_of<F(Rest...)>::type>
+    {
+        using namespace std;
+        using Return = typename result_of<F(Rest...)>::type;
+        using Functor = Return();
+        auto pck = make_shared<packaged_task<Functor>>(bind(forward<F>(f), forward<Rest>(rest)...));
 
-		this->func = _f;
-		return pck->get_future();
-	}
+        this->func = [pck]() { (*pck)(); };
+        return pck->get_future();
+    }
 
-	/*!
-	Возвращает id текущей задачи (task)
-	*/
-	int task_id() {
-		return this->id_;
-	}
+    /*!
+    Возвращает id текущей задачи (task)
+    */
+    int task_id() const
+    {
+        return this->id_;
+    }
 
-	/*!
-	Добавление названия и приоритета к текущей задаче (task)
-	*/
+    /*!
+    Добавление названия и приоритета к текущей задаче (task)
+    */
 
-	void make_task(const char *name, int priority) {
-		this->name = name;
-		this->priority = priority;
-	}
+    void make_task(const char *name, int priority)
+    {
+        this->name = name;
+        this->priority = priority;
+    }
 
-	/*!
-	\return приоритет текущей задачи (task)
-	*/
-	int task_priority() {
-		return this->priority;
-	}
+    /*!
+    \return приоритет текущей задачи (task)
+    */
+    int task_priority() const
+    {
+        return this->priority;
+    }
 
-	/*!
-	\return имя текущей задачи (task)
-	*/
-	string task_name() {
-		return this->name;
-	}
+    /*!
+    \return имя текущей задачи (task)
+    */
+    std::string task_name() const
+    {
+        return this->name;
+    }
 
-	/*!
-	\return вернуть функцию текущей задаче (task)
-	*/
+    /*!
+    \return вернуть функцию текущей задаче (task)
+    */
 
-	std::function<void(int id)> *task_func() {
-		return this->func;
-	}
+    std::function<void()> task_func() const
+    {
+        return func;
+    }
 };
 
 
-class TaskQueue {
+class TaskQueue
+{
 private:
-	size_t sz;
-	int quescap;
-	std::mutex m_mtx;
-	std::condition_variable m_cond;
-	task t;
-	bool v = false;
-	std::priority_queue<task> function_queue;
-	vector<task> task_vector;
-	task give_task();
+    std::size_t sz{};
+    int quescap{};
+    std::mutex m_mtx{};
+    std::condition_variable m_cond{};
+    mutable task t{};
+    bool v = false;
+    std::priority_queue<task> function_queue{};
+    std::vector<task> task_vector{};
+    task give_task() const;
 public:
-	TaskQueue(int q, bool verbose);
-	TaskQueue& operator=(const TaskQueue& rhs) {};
+    TaskQueue(int q, bool verbose);
 
-	/*!
-	Добавить задачу с именем name и приоритетом p в TaskQueue
-	*/
-	void add_task(const char *name, int p, task obj);
+    TaskQueue(const TaskQueue& rhs) = delete;
+    TaskQueue& operator=(const TaskQueue& rhs) = delete;
 
-	/*!
-	Добавить задачу в конец TaskQueue
-	*/
-	void push_to_end(std::thread::id this_id);
+    TaskQueue(TaskQueue&&) = default;
+    TaskQueue& operator=(TaskQueue&&) = default;
 
-	/*!
-	Вывести информацию о текущем потоке 1.Задачу запросил 2.Задачу получил 3. Задачу не получил
-	*/
+    /*!
+    Добавить задачу с именем name и приоритетом p в TaskQueue
+    */
+    void add_task(const char *name, int p, task obj);
 
-	void print(int mode, std::thread::id this_id);
+    /*!
+    Добавить задачу в конец TaskQueue
+    */
+    void push_to_end(std::thread::id this_id);
 
-	/*!
-	Проверить очередь на пустоту
-	*/
-	bool empty();
+    /*!
+    Вывести информацию о текущем потоке 1.Задачу запросил 2.Задачу получил 3. Задачу не получил
+    */
 
-	/*!
-	Удалить задачу из TaskQueue
-	*/
-	void pop();
+    void print(int mode, std::thread::id this_id) const;
 
-	/*!
-	Проверить вектор задач на пустоту
-	*/
-	bool check_task_vector();
+    /*!
+    Проверить очередь на пустоту
+    */
+    bool empty() const;
 
-	/*!
-	\return текущий размер очереди задач
-	*/
-	size_t size_function_queue();
+    /*!
+    Удалить задачу из TaskQueue
+    */
+    void pop();
 
-	/*!
-	\return максимальный размер очереди задач
-	*/
-	int return_quescap();
+    /*!
+    Проверить вектор задач на пустоту
+    */
+    bool check_task_vector() const;
 
-	/*!
-	Добавить задачу в очередь
-	*/
-	void push(int k);
+    /*!
+    \return текущий размер очереди задач
+    */
+    std::size_t size_function_queue() const;
 
-	/*!
-	\return номер текущей задачи
-	*/
-	int task_id();
+    /*!
+    \return максимальный размер очереди задач
+    */
+    int return_quescap();
 
-	/*!
-	\return функцию текущей задачи
-	*/
-	std::function<void(int id)> *task_f();
+    /*!
+    Добавить задачу в очередь
+    */
+    void push(int k);
 
-	/*!
-	\return имя текущей задачи
-	*/
-	string task_name();
+    /*!
+    \return номер текущей задачи
+    */
+    int task_id() const;
 
-	/*!
-	Брать задачи из вектора задач. Добавлять их в очередь и выполнять.
-	*/
-	void simple_run();
+    /*!
+    \return функцию текущей задачи
+    */
+    std::function<void()> task_f() const;
 
-	TaskQueue() = default;
+    /*!
+    \return имя текущей задачи
+    */
+    std::string task_name() const;
+
+    /*!
+    Брать задачи из вектора задач. Добавлять их в очередь и выполнять.
+    */
+    void simple_run();
+
+    TaskQueue() = default;
 };
 
-
+}
 

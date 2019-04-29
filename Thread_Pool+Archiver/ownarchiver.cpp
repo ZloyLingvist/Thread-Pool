@@ -1,7 +1,14 @@
-#include "ownarchiver.h"
+﻿#include "ownarchiver.h"
 
-std::shared_ptr<bi_file> ownarchiver::Open_File(const char *name, const char *mode) {
-	std::shared_ptr<bi_file> b_file = std::make_shared<bi_file>();
+#ifdef _WIN32
+#pragma warning(disable:4996)
+#endif
+
+using namespace std;
+using namespace my;
+
+shared_ptr<bi_file> ownarchiver::Open_File(const char *name, const char *mode) {
+	shared_ptr<bi_file> b_file = make_shared<bi_file>();
 	b_file->file = fopen(name, mode);
 	b_file->rack = 0;
 	b_file->mask = 0x80;
@@ -9,20 +16,20 @@ std::shared_ptr<bi_file> ownarchiver::Open_File(const char *name, const char *mo
 	return b_file;
 }
 
-void ownarchiver::Close_File(std::shared_ptr<bi_file> bfile, int mode) {
+void ownarchiver::Close_File(shared_ptr<bi_file> bfile, int mode) {
 	if (mode == 0) {
 		if (bfile->mask != 0x80) {
 			putc(bfile->rack, bfile->file);
 		}
-		std::fclose(bfile->file);
+		fclose(bfile->file);
 	}
 
 	if (mode == 1) {
-		std::fclose(bfile->file);
+		fclose(bfile->file);
 	}
 }
 
-void ownarchiver::WriteBits(std::shared_ptr<bi_file> bfile, unsigned long code, int count) {
+void ownarchiver::WriteBits(shared_ptr<bi_file> bfile, size_t code, int count) {
 	unsigned long mask;
 	mask = 1L << (count - 1);
 	while (mask != 0) {
@@ -40,7 +47,7 @@ void ownarchiver::WriteBits(std::shared_ptr<bi_file> bfile, unsigned long code, 
 	}
 }
 
-unsigned long ownarchiver::ReadBits(std::shared_ptr<bi_file> bfile, int bit_count) {
+unsigned long ownarchiver::ReadBits(shared_ptr<bi_file> bfile, int bit_count) {
 	unsigned long mask;
 	unsigned long return_value;
 	mask = 1L << (bit_count - 1);
@@ -69,11 +76,10 @@ unsigned long ownarchiver::ReadBits(std::shared_ptr<bi_file> bfile, int bit_coun
 }
 
 int ownarchiver::compress(const char *in,const char *out) {
-	int next_code, character, string_code;
-	unsigned int index, i;
+    size_t next_code, character, string_code;
 	next_code = FIRST_CODE;
 	FILE *input;
-	std::shared_ptr<bi_file> b_file;
+	shared_ptr<bi_file> b_file;
 	dictionary dict[dict_size];
 	
 	if (FILE *file = fopen(in, "r")) { fclose(file); }
@@ -83,7 +89,7 @@ int ownarchiver::compress(const char *in,const char *out) {
 
 	b_file = Open_File(out, "wb");
 
-	for (i = 0; i < TABLE_SIZE; i++) {
+	for (size_t i = 0; i < TABLE_SIZE; i++) {
 		dict[i].code_value = UNUSED;
 	}
 
@@ -92,7 +98,7 @@ int ownarchiver::compress(const char *in,const char *out) {
 	}
 
 	while ((character = getc(input)) != EOF) {
-		index = find_dictionary_match(string_code, character,dict);
+        size_t index = find_dictionary_match(string_code, character,dict);
 		if (dict[index].code_value != -1) {
 			string_code = dict[index].code_value;
 		}
@@ -103,13 +109,13 @@ int ownarchiver::compress(const char *in,const char *out) {
 				dict[index].character = static_cast<char>(character);
 			}
 
-			WriteBits(b_file, static_cast<std::make_unsigned<long>::type>(string_code), BITS);
+			WriteBits(b_file, static_cast<make_unsigned<long>::type>(string_code), BITS);
 			string_code = character;
 		}
 	}
 
-	WriteBits(b_file, static_cast<std::make_unsigned<long>::type>(string_code), BITS);
-	WriteBits(b_file, static_cast<std::make_unsigned<long>::type>(end_of_stream), BITS);
+	WriteBits(b_file, static_cast<make_unsigned<long>::type>(string_code), BITS);
+	WriteBits(b_file, static_cast<make_unsigned<long>::type>(end_of_stream), BITS);
 	Close_File(b_file, 0);
 	fclose(input);
 	return 0;
@@ -120,7 +126,7 @@ int ownarchiver::decompress(const char* in,const char* out) {
 	unsigned int next_code, new_code, old_code;
 	int character;
 	unsigned int count;
-	std::shared_ptr<bi_file> b_file;
+	shared_ptr<bi_file> b_file;
 	dictionary dict[dict_size];
 
 	FILE *output;
@@ -171,36 +177,25 @@ int ownarchiver::decompress(const char* in,const char* out) {
 }
 
 
-unsigned int ownarchiver::find_dictionary_match(int prefix_code, int character,dictionary *dict) {
-	int index;
-	int offset;
+size_t ownarchiver::find_dictionary_match(size_t prefix_code, size_t character, dictionary *dict) {
+    size_t index = (character << (BITS - 8)) ^ prefix_code; // x64 !! check it
+    size_t offset = (index == 0) ? 1 : (TABLE_SIZE - index);
 
-	index = (character << (BITS - 8)) ^ prefix_code;
-
-	if (index == 0) {
-		offset = 1;
-	}
-	else {
-		offset = TABLE_SIZE - index;
-	}
-
-	while (true) {
-		if (dict[index].code_value == UNUSED) {
+	while (true)
+    {
+		if (dict[index].code_value == UNUSED) // x64 access violation reading location
 			return index;
-		}
 
-		if (dict[index].prefix_code == prefix_code && dict[index].character == static_cast<char>(character)) {
+		if (dict[index].prefix_code == prefix_code && dict[index].character == static_cast<char>(character))
 			return index;
-		}
 
 		index -= offset;
-		if (index < 0) {
+		if (index < 0)
 			index += TABLE_SIZE;
-		}
 	}
 }
 
-unsigned int ownarchiver::decode_string(unsigned int count, unsigned int code, dictionary *dict) {
+unsigned int ownarchiver::decode_string(unsigned int count, size_t code, dictionary *dict) {
 	while (code > 255) 
 	{
 		decode_stack[count++] = dict[code].character;

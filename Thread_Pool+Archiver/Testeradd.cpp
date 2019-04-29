@@ -1,5 +1,9 @@
 #include "tester.h"
 
+using namespace std;
+using namespace my;
+using namespace my::test;
+
 string Testing_class::creativer() {
 	string const default_chars = "abcdefghijklmnaoqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
 	string randomString = "";
@@ -17,9 +21,9 @@ string Testing_class::creativer() {
 
 	return randomString;
 }
-bool Testing_class::isFilesEqual(const std::string& lFilePath, const std::string& rFilePath) {
-	std::ifstream lFile(lFilePath.c_str(), std::ifstream::in | std::ifstream::binary);
-	std::ifstream rFile(rFilePath.c_str(), std::ifstream::in | std::ifstream::binary);
+bool Testing_class::isFilesEqual(const string& lFilePath, const string& rFilePath) {
+	ifstream lFile(lFilePath.c_str(), ifstream::in | ifstream::binary);
+	ifstream rFile(rFilePath.c_str(), ifstream::in | ifstream::binary);
 
 	if (!lFile.is_open() || !rFile.is_open()) {
 		cout << "Cannot open first or second file" << endl;
@@ -53,21 +57,21 @@ bool Testing_class::exists(const char *name) {
 	}
 }
 double Testing_class::filesize(const char* filename) {
-	std::ifstream in(filename, std::ifstream::ate | std::ifstream::binary);
-	return in.tellg();
+	ifstream in(filename, ifstream::ate | ifstream::binary);
+	return static_cast<double>(in.tellg());
 }
 void Testing_class::create_file(int p, vector<string> &filenames) {
-	int file_amount = 0;
-	int text_amount = 0;
-	int i = 0;
-	int j = 0;
+    size_t file_amount = 0;
+    size_t text_amount = 0;
+    size_t i = 0;
+    size_t j = 0;
 	double size = 0;
 	string archname = "";
 	string str1 = "";
 	string str2 = "";
 	ofstream out;
 
-	srand(time(NULL));
+	srand(static_cast<unsigned int>(time(NULL)));
 	if (p != 0) {
 		archname = creativer() + ".tar";
 		cout << archname << endl;
@@ -174,6 +178,7 @@ bool Testing_class::extraction_function(int p,int log) {
 			}
 		}
 	}
+    return true;
 }
 void Testing_class::cleaner() {
 	for (size_t i = 1; i < test_vector.size(); i++) {
@@ -189,12 +194,12 @@ void Testing_class::cleaner() {
 
 /*-------------------------------------------------------*/
 
-void write(int i, const char *in, int count) {
+void my::test::my_write(/*int i, */const char *in, int count) {
 	for (int k = 0; k < count; k++) {
 		cout << in;
 	}
 }
-void function_block(TaskQueue &queue,int log) {
+void my::test::function_block(TaskQueue &queue,int log) {
 	removing("newarch.tar", "tempfile1.txt", "tempfile2.txt", "newarch2.tar");
 	task t1, t2, t3, t4, t5, t6, t7, t8;
 	t1.add_function(compress_own,log,"newarch.tar", "in1.txt", "tempfile1.txt", "tempfile2.txt", "in2.txt");
@@ -216,17 +221,17 @@ void function_block(TaskQueue &queue,int log) {
 	queue.add_task("Compare_own", 2, t4);
 	queue.add_task("Compare_lib", 2, t8);
 }
-void removing(const char *name, const char *in1, const char *in2, const char *in3) {
+void my::test::removing(const char *name, const char *in1, const char *in2, const char *in3) {
 	remove(name);
 	remove(in1);
 	remove(in2);
 	remove(in3);
 }
-void extract(int i, int log, const char *name) {
+void my::test::extract(/*int i, */int log, const char *name) {
 	tarchiver myar(name,"e",log);
 }
 
-void compress_own(int i, int log,const char *name, const char *file1, const char *file_tmp1, const char *file_tmp2, const char *file2) {
+void my::test::compress_own(/*int i, */int log,const char *name, const char *file1, const char *file_tmp1, const char *file_tmp2, const char *file2) {
 	tarchiver myar(name,"a",log);
 	ownarchiver o_ar;
 	o_ar.compress(file1, file_tmp1);
@@ -237,7 +242,7 @@ void compress_own(int i, int log,const char *name, const char *file1, const char
 	myar.close();
 	return;
 }
-void compress_lib(int i, int log, const char *name, const char *file1, const char *file_tmp1, const char *file_tmp2, const char *file2) {
+void my::test::compress_lib(/*int i, */int log, const char *name, const char *file1, const char *file_tmp1, const char *file_tmp2, const char *file2) {
 	tarchiver myar(name,"a",log);
 	lib_archiver l_ar;
 	l_ar.compress(file1, file_tmp1);
@@ -249,31 +254,31 @@ void compress_lib(int i, int log, const char *name, const char *file1, const cha
 	return;
 }
 
-void decompress_own(int i, const char *name, const char *file_in1, const char *file_in2, const char *file_out1, const char *file_out2) {
+void my::test::decompress_own(/*int i, */const char *name, const char *file_in1, const char *file_in2, const char *file_out1, const char *file_out2) {
 	ownarchiver o_ar;
 	o_ar.decompress(file_in1, file_out1);
 	o_ar.decompress(file_in2, file_out2);
 	return;
 }
-void decompress_lib(int i, const char *name, const char *file_in1, const char *file_in2, const char *file_out1, const char *file_out2) {
+void my::test::decompress_lib(/*int i, */const char *name, const char *file_in1, const char *file_in2, const char *file_out1, const char *file_out2) {
 	lib_archiver l_ar;
 	l_ar.decompress(file_in1, file_out1);
 	l_ar.decompress(file_in2, file_out2);
 	return;
 }
 
-void void_task(int i,int a,int b,int n, const char *text){
+void my::test::void_task(/*int i, */int a,int b,int n, const char *text){
 	cout << "Calculate" << endl;
 	for (int k = 0; k < n; k++) {
 		a = a*b;
 	}
 	cout << text << " " << a;
 }
-int int_task(int i,int a, int b) {
+int my::test::int_task(/*int i, */int a, int b) {
 	cout << a + b << endl;
 	return (a + b);
 }
-string string_test(int i, const char *str1, const char *str2) {
+string my::test::string_test(/*int i, */const char *str1, const char *str2) {
 	cout << str1 << " " << str2 << endl;
 	return str1;
 }

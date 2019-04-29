@@ -1,6 +1,10 @@
-#include "tester.h"
+﻿#include "tester.h"
 #include "TaskQueue.h"
 #include "Threadpool.h"
+
+using namespace std;
+using namespace my;
+using namespace my::test;
 
 bool Testing_class::test_1(int p){
 	if (p == 1) {
@@ -89,7 +93,7 @@ bool Testing_class::test_7(int q) {
 		queue.simple_run();
 		return true;
 	}
-	catch (const std::exception &e) {
+	catch (const exception&) {
 		return false;
 	}
 }
@@ -99,12 +103,12 @@ bool Testing_class::test_8(int w) {
 	logging("--[ThreadPool without TestQueue ]--");
 	try {
 		Threadpool thread_pool(w,v);
-		thread_pool.add_function(void_task,5,4,40,"stroka");
-		thread_pool.add_function(int_task,10,200);
-		thread_pool.add_function(string_test, "10", "200");
+		auto future1 = thread_pool.add_function(void_task,5,4,40,"stroka");
+        auto future2 = thread_pool.add_function(int_task,10,200);
+        auto future3 = thread_pool.add_function(string_test, "10", "200");
 		return true;
 	}
-	catch (const std::exception &e) {
+	catch (const exception&) {
 		return false;
 	}
 }
@@ -115,10 +119,11 @@ bool Testing_class::test_9(int w, int q){
 	try {
 		task t1, t2, t3,t4;
 		bool v = false;
-		t1.add_function(write, "T1\n", 1);
-		t2.add_function(write, "T2\n", 1);
-		t3.add_function(write, "T3\n", 1);
-		t4.add_function(write, "T4\n", 1);
+
+		auto future1 = t1.add_function(my_write, "T1\n", 1);
+        auto future2 = t2.add_function(my_write, "T2\n", 1);
+        auto future3 = t3.add_function(my_write, "T3\n", 1);
+        auto future4 = t4.add_function(my_write, "T4\n", 1);
 
 		TaskQueue queue(q, v);
 		queue.add_task("T1", 3, t1);
@@ -130,7 +135,7 @@ bool Testing_class::test_9(int w, int q){
 		return true;
 	}
 
-	catch (const std::exception &e) {
+	catch (const exception&) {
 		return false;
 	}
 }
@@ -145,7 +150,7 @@ bool Testing_class::test_10(int w,int q){
 		return true;
 	}
 
-	catch (const std::exception &e) {
+	catch (const exception&) {
 		return false;
 	}
 }
@@ -153,7 +158,7 @@ bool Testing_class::test_10(int w,int q){
 void Testing_class::logging(const char *msg) {
 	if (log_test == 0) {
 		ofstream fout_log_test;
-		fout_log_test.open("log_test.txt", std::ios_base::app);
+		fout_log_test.open("log_test.txt", ios_base::app);
 		fout_log_test << msg << endl;
 		fout_log_test.close();
 	}
@@ -173,7 +178,7 @@ void comp_sub(const char *file1, const char *file_res1,int log) {
 		cout << file1 << "not ~" << file_res1 << endl;
 	}
 }
-void comp(int i, const char *file1, const char *file2, const char *file_res1, const char *file_res2) {
+void my::test::comp(/*int i, */const char *file1, const char *file2, const char *file_res1, const char *file_res2) {
 	comp_sub(file1, file_res1,1);
 	comp_sub(file2, file_res2,1);
 }

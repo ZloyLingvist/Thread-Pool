@@ -2,12 +2,15 @@
 #include "Threadpool.h"
 #include "TaskQueue.h"
 
+using namespace std;
+using namespace my;
+
 extern bool v;
 
 Threadpool::Threadpool(int w, TaskQueue &obj, bool verbose) : lock(), data_condition(), active(true), vector_thread_pool(){
 	workers = w; 
 	for (int i = 0; i < workers; i++) {
-		vector_thread_pool.emplace_back(std::thread(&Threadpool::work, this, std::ref(obj)));
+		vector_thread_pool.emplace_back(thread(&Threadpool::work, this, ref(obj)));
 	}
 	
 	run(obj);
@@ -17,7 +20,7 @@ Threadpool::Threadpool(int w, TaskQueue &obj, bool verbose) : lock(), data_condi
 Threadpool::Threadpool(int w,bool verbose) : lock(), data_condition(), active(true), vector_thread_pool(){
 	workers = w;
 	for (int i = 0; i < workers; i++) {
-		vector_thread_pool.emplace_back(std::thread(&Threadpool::simple_run, this));
+		vector_thread_pool.emplace_back(thread(&Threadpool::simple_run, this));
 	}
 	v = verbose;
 }
@@ -30,17 +33,17 @@ Threadpool::~Threadpool() {
 
 void Threadpool::work(TaskQueue &obj){
 	bool v = true;
-	std::function<void(int id)> *func;
+	function<void()> func;
 	task d;
 	int id = 0;
 	int error = 0;
 	string name = "";
 	string error_name="";
-	std::thread::id this_id = std::this_thread::get_id();
+	thread::id this_id = this_thread::get_id();
 	
 	while (true) {
 		{
-			std::unique_lock<std::mutex> lock_(lock);
+			unique_lock<mutex> lock_(lock);
 			data_condition.wait(lock_,[this,&obj](){
 				cout << endl;
 				return !obj.empty() || !active;
@@ -78,17 +81,17 @@ void Threadpool::work(TaskQueue &obj){
 		}
 
 		try {
-			(*func)(id);
+			func();
 			if (v == true) {
 				cout.width(10);
-				std::cout << this_id << " Задача " << name << " выполнена " << std::endl;
+				cout << this_id << " Задача " << name << " выполнена " << endl;
 			}
 		}
 
-		catch (const std::exception &e) {
+		catch (const exception&) {
 			if (v == true){
 				cout.width(10);
-				std::cout << this_id << " Вызвано исключение у задачи " << id << std::endl;
+				cout << this_id << " Вызвано исключение у задачи " << id << endl;
 			}
 			
 			obj.push_to_end(this_id);
@@ -114,17 +117,17 @@ bool Threadpool::run(TaskQueue &obj) {
 
 void Threadpool::simple_run() {
 	bool v = true;
-	std::function<void(int id)> *func;
+	function<void()> func;
 	task d;
-	int id = 0;
+    size_t id = 0;
 	int error = 0;
 	string name = "";
 	string error_name = "";
-	std::thread::id this_id = std::this_thread::get_id();
+	thread::id this_id = this_thread::get_id();
 
 	while (true) {
 		{
-			std::unique_lock<std::mutex> lock_(lock);
+			unique_lock<mutex> lock_(lock);
 			data_condition.wait(lock_, [this_id, this]() {
 				cout << endl;
 				return !myv.empty() || !active;
@@ -147,16 +150,16 @@ void Threadpool::simple_run() {
 		}
 
 		try {
-			(*func)(id);
+			func();
 			if (v == true) {
 				cout.width(10);
-				std::cout << this_id << " Задача " << name << " выполнена " << std::endl;
+				cout << this_id << " Задача " << name << " выполнена " << endl;
 			}
 		}
 
-		catch (const std::exception &e) {
+		catch (const exception&) {
 			cout.width(10);
-			std::cout << this_id << " Вызвано исключение у задачи " << id << std::endl;
+			cout << this_id << " Вызвано исключение у задачи " << id << endl;
 		}
 	}
 }

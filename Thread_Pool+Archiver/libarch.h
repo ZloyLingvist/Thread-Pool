@@ -1,5 +1,6 @@
 #pragma once
 #include <memory>
+#include <string>
 #include "tar.h"
 #include "quicklz.h"
 
@@ -7,11 +8,42 @@
 * @file libarch.h
 */
 
-class lib_archiver:public Tar {
-public:
-	lib_archiver() = default;
-	~lib_archiver() = default;
-	int compress(const char* in, const char* out) override;
-	int decompress(const char* in, const char* out) override;
-};
+#ifdef _WIN32
+#include <io.h> 
+#define access    _access_s
+#else
+#include <unistd.h>
+#endif
 
+namespace my{
+inline bool FileExists(const std::string &Filename)
+{
+    return access(Filename.c_str(), 0) == 0;
+}
+
+class lib_archiver : public Tar
+ {
+public:
+    //lib_archiver() = default;
+    //~lib_archiver() = default;
+    int compress(const char* in, const char* out) //override
+    {
+        //if (FILE *file = fopen(in, "r")) { fclose(file); }
+        //else { return -1; }
+        if (!FileExists(in))
+            return -1;
+        quick_compress(in, out);
+        return 0;
+    }
+    int decompress(const char* in, const char* out) //override
+    {
+        //if (FILE *file = fopen(in, "r")) { fclose(file); }
+        //else { return -1; }
+        if (!FileExists(in))
+            return -1;
+        quick_decompress(in, out);
+        return 0;
+    }
+
+};
+}

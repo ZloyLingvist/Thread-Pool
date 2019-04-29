@@ -1,7 +1,10 @@
-#pragma warning(disable:4996)
+п»ї#pragma once
+
 #include <queue>
 #include <future>
 #include <mutex>
+#include <functional>
+#include <type_traits>
 #include <iostream>
 #include <ctime>  
 #include <string>
@@ -9,67 +12,69 @@
 
 /**
 * @file Threadpool.h
-* @brief Класс реализующий функциональность тредпула
+* @brief РљР»Р°СЃСЃ СЂРµР°Р»РёР·СѓСЋС‰РёР№ С„СѓРЅРєС†РёРѕРЅР°Р»СЊРЅРѕСЃС‚СЊ С‚СЂРµРґРїСѓР»Р°
 */
 
-using namespace std;
+namespace my
+{
 
-class Threadpool {
+class Threadpool
+{
 private:
-	std::mutex lock;
-	std::condition_variable data_condition;
-	std::atomic<bool> active;
-	std::vector<std::thread> vector_thread_pool;
-	vector<std::function<void(int i)>*> myv;
-	int workers = 0; // количество потоков
-	bool v = false; // verbose показывать ли 
+    std::mutex lock{};
+    std::condition_variable data_condition{};
+    std::atomic<bool> active{};
+    std::vector<std::thread> vector_thread_pool{};
+    std::vector<std::function<void()>> myv{};
+    int workers{ 0 }; // РєРѕР»РёС‡РµСЃС‚РІРѕ РїРѕС‚РѕРєРѕРІ
+    bool v{ false }; // verbose РїРѕРєР°Р·С‹РІР°С‚СЊ Р»Рё 
 public:
-	/*!
-	По количеству потоков в vector_thread_pool закидываются тред. К которым на вход подаются задачи из TaskQueue
-	Когда поток освободился он "просит" выдать себе задачу. Когда задачи выполнены, то работа завершается
-	\param w -- количество потоков, TaskQueue -- очередь задач
-	*/
-	Threadpool(int w, TaskQueue &obj, bool verbose);
+    /*!
+    РџРѕ РєРѕР»РёС‡РµСЃС‚РІСѓ РїРѕС‚РѕРєРѕРІ РІ vector_thread_pool Р·Р°РєРёРґС‹РІР°СЋС‚СЃСЏ С‚СЂРµРґ. Рљ РєРѕС‚РѕСЂС‹Рј РЅР° РІС…РѕРґ РїРѕРґР°СЋС‚СЃСЏ Р·Р°РґР°С‡Рё РёР· TaskQueue
+    РљРѕРіРґР° РїРѕС‚РѕРє РѕСЃРІРѕР±РѕРґРёР»СЃСЏ РѕРЅ "РїСЂРѕСЃРёС‚" РІС‹РґР°С‚СЊ СЃРµР±Рµ Р·Р°РґР°С‡Сѓ. РљРѕРіРґР° Р·Р°РґР°С‡Рё РІС‹РїРѕР»РЅРµРЅС‹, С‚Рѕ СЂР°Р±РѕС‚Р° Р·Р°РІРµСЂС€Р°РµС‚СЃСЏ
+    \param w -- РєРѕР»РёС‡РµСЃС‚РІРѕ РїРѕС‚РѕРєРѕРІ, TaskQueue -- РѕС‡РµСЂРµРґСЊ Р·Р°РґР°С‡
+    */
+    Threadpool(int w, TaskQueue &obj, bool verbose);
 
-	/*!
-	По количеству потоков в vector_thread_pool закидываются тред. К которым на вход подаются задачи из вектора функций,
-	Когда поток освободился он "просит" выдать себе задачу. Когда задачи выполнены, то работа завершается
-	\param w -- количество потоков
-	*/
-	Threadpool(int w, bool verbose);
+    /*!
+    РџРѕ РєРѕР»РёС‡РµСЃС‚РІСѓ РїРѕС‚РѕРєРѕРІ РІ vector_thread_pool Р·Р°РєРёРґС‹РІР°СЋС‚СЃСЏ С‚СЂРµРґ. Рљ РєРѕС‚РѕСЂС‹Рј РЅР° РІС…РѕРґ РїРѕРґР°СЋС‚СЃСЏ Р·Р°РґР°С‡Рё РёР· РІРµРєС‚РѕСЂР° С„СѓРЅРєС†РёР№,
+    РљРѕРіРґР° РїРѕС‚РѕРє РѕСЃРІРѕР±РѕРґРёР»СЃСЏ РѕРЅ "РїСЂРѕСЃРёС‚" РІС‹РґР°С‚СЊ СЃРµР±Рµ Р·Р°РґР°С‡Сѓ. РљРѕРіРґР° Р·Р°РґР°С‡Рё РІС‹РїРѕР»РЅРµРЅС‹, С‚Рѕ СЂР°Р±РѕС‚Р° Р·Р°РІРµСЂС€Р°РµС‚СЃСЏ
+    \param w -- РєРѕР»РёС‡РµСЃС‚РІРѕ РїРѕС‚РѕРєРѕРІ
+    */
+    Threadpool(int w, bool verbose);
 
-	/*!
-	Пока есть задачи треды их выполняют в цикле. Задачи берутся из TaskQueue
-	*/
-	void work(TaskQueue &obj);
+    /*!
+    РџРѕРєР° РµСЃС‚СЊ Р·Р°РґР°С‡Рё С‚СЂРµРґС‹ РёС… РІС‹РїРѕР»РЅСЏСЋС‚ РІ С†РёРєР»Рµ. Р—Р°РґР°С‡Рё Р±РµСЂСѓС‚СЃСЏ РёР· TaskQueue
+    */
+    void work(TaskQueue &obj);
 
-	/*!
-	Проверка есть ли еще задачи в векторе задач TaskQueue. Если есть, то добавляем задачи в очередь
-	*/
-	bool run(TaskQueue &obj);
+    /*!
+    РџСЂРѕРІРµСЂРєР° РµСЃС‚СЊ Р»Рё РµС‰Рµ Р·Р°РґР°С‡Рё РІ РІРµРєС‚РѕСЂРµ Р·Р°РґР°С‡ TaskQueue. Р•СЃР»Рё РµСЃС‚СЊ, С‚Рѕ РґРѕР±Р°РІР»СЏРµРј Р·Р°РґР°С‡Рё РІ РѕС‡РµСЂРµРґСЊ
+    */
+    bool run(TaskQueue &obj);
 
-	/*!
-	Пока есть задачи треды их выполняют в цикле. Задачи берутся из вектора задач тредпула
-	*/
-	void simple_run();
+    /*!
+    РџРѕРєР° РµСЃС‚СЊ Р·Р°РґР°С‡Рё С‚СЂРµРґС‹ РёС… РІС‹РїРѕР»РЅСЏСЋС‚ РІ С†РёРєР»Рµ. Р—Р°РґР°С‡Рё Р±РµСЂСѓС‚СЃСЏ РёР· РІРµРєС‚РѕСЂР° Р·Р°РґР°С‡ С‚СЂРµРґРїСѓР»Р°
+    */
+    void simple_run();
 
-	/*!
-	Добавление функций в вектор задач тредпула
-	*/
-	template<typename F, typename... Rest>
-	auto add_function(F && f, Rest&&... rest) ->std::future<decltype(f(0, rest...))> {
-		auto pck = std::make_shared<std::packaged_task<decltype(f(0, rest...))(int)>>(
-			std::bind(std::forward<F>(f), std::placeholders::_1, std::forward<Rest>(rest)...)
-			);
-		auto _f = new std::function<void(int id)>([pck](int id) {
-			(*pck)(id);
-		});
+    /*!
+    Р”РѕР±Р°РІР»РµРЅРёРµ С„СѓРЅРєС†РёР№ РІ РІРµРєС‚РѕСЂ Р·Р°РґР°С‡ С‚СЂРµРґРїСѓР»Р°
+    */
+    template <typename F, typename... Rest>
+    auto add_function(F&& f, Rest&&... rest) -> std::future<typename std::result_of<F(Rest...)>::type>
+    {
+        using namespace std;
+        using Return = typename result_of<F(Rest...)>::type;
+        using Functor = Return();
+        auto pck = make_shared<packaged_task<Functor>>(bind(forward<F>(f), forward<Rest>(rest)...));
+    
+        auto func = [pck]() { (*pck)(); };
+        myv.push_back(func);
+        return pck->get_future();
+    }
 
-		myv.push_back(_f);
-		return pck->get_future();
-	}
-
-	Threadpool::~Threadpool();
+    Threadpool::~Threadpool();
 };
 
-
+}

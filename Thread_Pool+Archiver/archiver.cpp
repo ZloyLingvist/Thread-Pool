@@ -1,5 +1,15 @@
-#pragma once
+﻿//#pragma once нужно только для заголовков, чтобы они копировались в obj единожды
+
+#include <ctime>
+#include <cstdio>
 #include "archiver.h"
+
+#ifdef _WIN32
+#pragma warning(disable:4996)
+#endif
+
+using namespace std;
+using namespace my;
 
 tarchiver::tarchiver(const char *filename, const char *mode,int md) : finished(false) {
 	log = md;
@@ -28,17 +38,17 @@ tarchiver::tarchiver(const char *filename, const char *mode,int md) : finished(f
 	}
 }
 
-tarchiver:: ~tarchiver() {
+tarchiver:: ~tarchiver() /*noexept*/ {
 	if (!finished) {
 		logging("Tar file was not finished.");
-		throw("Tar file was not finished.");
+		//throw("Tar file was not finished."); // НИКОГДА ТАК НЕ ДЕЛАЙ!!!
 	}
 }
 
 void tarchiver::init(void* header) {
 	memset(header, 0, sizeof(tarheader));
 	sprintf(static_cast<tarheader*>(header)->indicator, "ustar  ");
-	sprintf(static_cast<tarheader*>(header)->modiftime, "%011lo", time(NULL));
+	sprintf(static_cast<tarheader*>(header)->modiftime, "%011o", static_cast<unsigned>(time(NULL)));
 	sprintf(static_cast<tarheader*>(header)->filemode, "%07o", 0777);
 	sprintf(static_cast<tarheader*>(header)->groupid, "%s", "users");
 }
@@ -100,7 +110,7 @@ void tarchiver::close() {
 void tarchiver::add_to_archive(const char* filename) {
 	FILE* in = std::fopen(filename, "rb");
 	char buff[BUFSIZ];
-	unsigned long int total = 0;
+    size_t total = 0;
 	size_t nRead = 0;
 
 	if (in == NULL) {
@@ -194,7 +204,7 @@ void tarchiver::untar(FILE *a, const char *name) {
 	char buff[512];
 	FILE *f = NULL;
 	size_t bytes_read;
-	int filesize=0;
+    size_t filesize=0;
 	string my(name);
 
 	logging(("Extracting from " + my).c_str());

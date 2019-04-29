@@ -1,4 +1,4 @@
-#pragma once
+п»ї#pragma once
 #pragma warning(disable:4996)
 #include <iostream>
 #include <fstream>
@@ -14,166 +14,180 @@
 
 /**
 * @file tester.h
-* @brief Тестирующий класс
+* @brief РўРµСЃС‚РёСЂСѓСЋС‰РёР№ РєР»Р°СЃСЃ
 */
 
-using namespace std;
+namespace my
+{
 
-class Testing_class {
+namespace test
+{
+
+class Testing_class
+{
 private:
-	vector<string> test_vector; //здесь хранятся имена файлов для которых нужно провести тестирование. Первый элемент-имя архива
-								//если последнее значение вектора 1, то без сжатия; 2 (не библиотечный алгоритм сжатия). 3 библиотечный
-	double size_after = 0, size_before = 0; // размер файлов до и после
+    std::vector<std::string> test_vector; //Р·РґРµСЃСЊ С…СЂР°РЅСЏС‚СЃСЏ РёРјРµРЅР° С„Р°Р№Р»РѕРІ РґР»СЏ РєРѕС‚РѕСЂС‹С… РЅСѓР¶РЅРѕ РїСЂРѕРІРµСЃС‚Рё С‚РµСЃС‚РёСЂРѕРІР°РЅРёРµ. РџРµСЂРІС‹Р№ СЌР»РµРјРµРЅС‚-РёРјСЏ Р°СЂС…РёРІР°
+                                //РµСЃР»Рё РїРѕСЃР»РµРґРЅРµРµ Р·РЅР°С‡РµРЅРёРµ РІРµРєС‚РѕСЂР° 1, С‚Рѕ Р±РµР· СЃР¶Р°С‚РёСЏ; 2 (РЅРµ Р±РёР±Р»РёРѕС‚РµС‡РЅС‹Р№ Р°Р»РіРѕСЂРёС‚Рј СЃР¶Р°С‚РёСЏ). 3 Р±РёР±Р»РёРѕС‚РµС‡РЅС‹Р№
+    double size_after = 0, size_before = 0; // СЂР°Р·РјРµСЂ С„Р°Р№Р»РѕРІ РґРѕ Рё РїРѕСЃР»Рµ
 
-	string creativer(); //Генерирует случайную строку. Используется для заполнения файла с произвольным именем 
-						// произвольным содержимым
-						//return сгенерированную строку (тип string )
+    std::string creativer(); //Р“РµРЅРµСЂРёСЂСѓРµС‚ СЃР»СѓС‡Р°Р№РЅСѓСЋ СЃС‚СЂРѕРєСѓ. РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ Р·Р°РїРѕР»РЅРµРЅРёСЏ С„Р°Р№Р»Р° СЃ РїСЂРѕРёР·РІРѕР»СЊРЅС‹Рј РёРјРµРЅРµРј 
+                        // РїСЂРѕРёР·РІРѕР»СЊРЅС‹Рј СЃРѕРґРµСЂР¶РёРјС‹Рј
+                        //return СЃРіРµРЅРµСЂРёСЂРѕРІР°РЅРЅСѓСЋ СЃС‚СЂРѕРєСѓ (С‚РёРї string )
 
-	bool exists(const char *name); //проверка файла на существование
-	double filesize(const char* filename); //размер файла
-	void creation_function(int p, int log); //функция добавления в архив. p=1 || 4 без сжатия, p==2 не библиотечное сжатие , p==3 библиот.
-	bool extraction_function(int p, int log);//функция извлечения из архива. p==1 извлечь. p==2 извлечь и декомпресс (не библ) p==3 извлечь и декомпресс (библ)
-	void create_file(int mode, vector<string> &filenames);//создает файлы в соответствии с filenames. 
-														  //Если mode=0, то используются имена введенные пользователем, 
-														  //иначе сгенерированный программой
+    bool exists(const char *name); //РїСЂРѕРІРµСЂРєР° С„Р°Р№Р»Р° РЅР° СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёРµ
+    double filesize(const char* filename); //СЂР°Р·РјРµСЂ С„Р°Р№Р»Р°
+    void creation_function(int p, int log); //С„СѓРЅРєС†РёСЏ РґРѕР±Р°РІР»РµРЅРёСЏ РІ Р°СЂС…РёРІ. p=1 || 4 Р±РµР· СЃР¶Р°С‚РёСЏ, p==2 РЅРµ Р±РёР±Р»РёРѕС‚РµС‡РЅРѕРµ СЃР¶Р°С‚РёРµ , p==3 Р±РёР±Р»РёРѕС‚.
+    bool extraction_function(int p, int log);//С„СѓРЅРєС†РёСЏ РёР·РІР»РµС‡РµРЅРёСЏ РёР· Р°СЂС…РёРІР°. p==1 РёР·РІР»РµС‡СЊ. p==2 РёР·РІР»РµС‡СЊ Рё РґРµРєРѕРјРїСЂРµСЃСЃ (РЅРµ Р±РёР±Р») p==3 РёР·РІР»РµС‡СЊ Рё РґРµРєРѕРјРїСЂРµСЃСЃ (Р±РёР±Р»)
+    void create_file(int mode, std::vector<std::string> &filenames);//СЃРѕР·РґР°РµС‚ С„Р°Р№Р»С‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ filenames. 
+                                                          //Р•СЃР»Рё mode=0, С‚Рѕ РёСЃРїРѕР»СЊР·СѓСЋС‚СЃСЏ РёРјРµРЅР° РІРІРµРґРµРЅРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј, 
+                                                          //РёРЅР°С‡Рµ СЃРіРµРЅРµСЂРёСЂРѕРІР°РЅРЅС‹Р№ РїСЂРѕРіСЂР°РјРјРѕР№
 
-	void cleaner();//после завершения работы удаляет файлы в соответствии с именами в векторе test_vector
+    void cleaner();//РїРѕСЃР»Рµ Р·Р°РІРµСЂС€РµРЅРёСЏ СЂР°Р±РѕС‚С‹ СѓРґР°Р»СЏРµС‚ С„Р°Р№Р»С‹ РІ СЃРѕРѕС‚РІРµС‚СЃС‚РІРёРё СЃ РёРјРµРЅР°РјРё РІ РІРµРєС‚РѕСЂРµ test_vector
 
-	bool sub_test_3();//Функция test_3 получает произвольное число имен с которыми хочет работать пользователь. 
-					  //sub_test_3 архивирует и дезархивирует эти файлы. Успех или не успех возвращаются в test_3
+    bool sub_test_3();//Р¤СѓРЅРєС†РёСЏ test_3 РїРѕР»СѓС‡Р°РµС‚ РїСЂРѕРёР·РІРѕР»СЊРЅРѕРµ С‡РёСЃР»Рѕ РёРјРµРЅ СЃ РєРѕС‚РѕСЂС‹РјРё С…РѕС‡РµС‚ СЂР°Р±РѕС‚Р°С‚СЊ РїРѕР»СЊР·РѕРІР°С‚РµР»СЊ. 
+                      //sub_test_3 Р°СЂС…РёРІРёСЂСѓРµС‚ Рё РґРµР·Р°СЂС…РёРІРёСЂСѓРµС‚ СЌС‚Рё С„Р°Р№Р»С‹. РЈСЃРїРµС… РёР»Рё РЅРµ СѓСЃРїРµС… РІРѕР·РІСЂР°С‰Р°СЋС‚СЃСЏ РІ test_3
 
-					  // используется в test_3 для разделения введенного пользователем на отдельные сегменты
-	string merge(std::initializer_list<std::string> strList) {
-		std::string ret = "";
-		for (std::string s : strList) { ret += s; }
-		return ret;
-	}
+                      // РёСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ test_3 РґР»СЏ СЂР°Р·РґРµР»РµРЅРёСЏ РІРІРµРґРµРЅРЅРѕРіРѕ РїРѕР»СЊР·РѕРІР°С‚РµР»РµРј РЅР° РѕС‚РґРµР»СЊРЅС‹Рµ СЃРµРіРјРµРЅС‚С‹
+    std::string merge(std::initializer_list<std::string> strList)
+    {
+        std::string ret = "";
+        for (std::string s : strList) { ret += s; }
+        return ret;
+    }
 
 protected:
-	int log_test = 0;//вывести на экран (0) или в файл(1) процесс тестирования
+    int log_test = 0;//РІС‹РІРµСЃС‚Рё РЅР° СЌРєСЂР°РЅ (0) РёР»Рё РІ С„Р°Р№Р»(1) РїСЂРѕС†РµСЃСЃ С‚РµСЃС‚РёСЂРѕРІР°РЅРёСЏ
 
 public:
-	Testing_class(int lg) {
-		log_test = lg;
-	}
+    Testing_class(int lg)
+    {
+        log_test = lg;
+    }
 
-	~Testing_class() = default;
+    ~Testing_class() = default;
 
-	/*!
-	Логирование. В зависимости от значения log_test куда вывести процесс тестирования ( сообщение msg )
-	*/
+    /*!
+    Р›РѕРіРёСЂРѕРІР°РЅРёРµ. Р’ Р·Р°РІРёСЃРёРјРѕСЃС‚Рё РѕС‚ Р·РЅР°С‡РµРЅРёСЏ log_test РєСѓРґР° РІС‹РІРµСЃС‚Рё РїСЂРѕС†РµСЃСЃ С‚РµСЃС‚РёСЂРѕРІР°РЅРёСЏ ( СЃРѕРѕР±С‰РµРЅРёРµ msg )
+    */
 
-	void logging(const char *msg);
+    void logging(const char *msg);
 
-	/*!
-	Сравнивает 2 файла с именами lFilePath и rFilePath.
-	\return true если файлы эквивалентны. false иначе
-	*/
-	bool isFilesEqual(const std::string& lFilePath, const std::string& rFilePath);
+    /*!
+    РЎСЂР°РІРЅРёРІР°РµС‚ 2 С„Р°Р№Р»Р° СЃ РёРјРµРЅР°РјРё lFilePath Рё rFilePath.
+    \return true РµСЃР»Рё С„Р°Р№Р»С‹ СЌРєРІРёРІР°Р»РµРЅС‚РЅС‹. false РёРЅР°С‡Рµ
+    */
+    bool isFilesEqual(const std::string& lFilePath, const std::string& rFilePath);
 
-	/*!
-	Создать архив и проверить его на существование
-	\param p - 1 сгенерировать файл с произвольным именем и произвольным содержимым
-	\return true если успех. false иначе
-	*/
+    /*!
+    РЎРѕР·РґР°С‚СЊ Р°СЂС…РёРІ Рё РїСЂРѕРІРµСЂРёС‚СЊ РµРіРѕ РЅР° СЃСѓС‰РµСЃС‚РІРѕРІР°РЅРёРµ
+    \param p - 1 СЃРіРµРЅРµСЂРёСЂРѕРІР°С‚СЊ С„Р°Р№Р» СЃ РїСЂРѕРёР·РІРѕР»СЊРЅС‹Рј РёРјРµРЅРµРј Рё РїСЂРѕРёР·РІРѕР»СЊРЅС‹Рј СЃРѕРґРµСЂР¶РёРјС‹Рј
+    \return true РµСЃР»Рё СѓСЃРїРµС…. false РёРЅР°С‡Рµ
+    */
 
-	bool test_1(int p);
+    bool test_1(int p);
 
-	/*!
-	Создать архив, извлечь его содержимое и проверить, что вес изначальных файлов равен весу извлеченных
-	\param p p==1 извлечь. p==2 извлечь и декомпресс (не библ) p==3 извлечь и декомпресс (библ)
-	\return true если успех. false иначе
-	*/
-	bool test_2(int p);
+    /*!
+    РЎРѕР·РґР°С‚СЊ Р°СЂС…РёРІ, РёР·РІР»РµС‡СЊ РµРіРѕ СЃРѕРґРµСЂР¶РёРјРѕРµ Рё РїСЂРѕРІРµСЂРёС‚СЊ, С‡С‚Рѕ РІРµСЃ РёР·РЅР°С‡Р°Р»СЊРЅС‹С… С„Р°Р№Р»РѕРІ СЂР°РІРµРЅ РІРµСЃСѓ РёР·РІР»РµС‡РµРЅРЅС‹С…
+    \param p p==1 РёР·РІР»РµС‡СЊ. p==2 РёР·РІР»РµС‡СЊ Рё РґРµРєРѕРјРїСЂРµСЃСЃ (РЅРµ Р±РёР±Р») p==3 РёР·РІР»РµС‡СЊ Рё РґРµРєРѕРјРїСЂРµСЃСЃ (Р±РёР±Р»)
+    \return true РµСЃР»Рё СѓСЃРїРµС…. false РёРЅР°С‡Рµ
+    */
+    bool test_2(int p);
 
-	/*!
-	Создать архив, извлечь его содержимое и проверить, что вес изначальных файлов равен весу извлеченных
-	\param p p=1 сгенерировать файл с произвольным именем и произвольным содержимым
-	\return true если успех. false иначе
-	*/
-	template<typename T>
-	string toString(T value) {
-		ostringstream oss;
-		oss << value;
-		test_vector.push_back(oss.str());
-		return oss.str() + " ";
-	}
+    /*!
+    РЎРѕР·РґР°С‚СЊ Р°СЂС…РёРІ, РёР·РІР»РµС‡СЊ РµРіРѕ СЃРѕРґРµСЂР¶РёРјРѕРµ Рё РїСЂРѕРІРµСЂРёС‚СЊ, С‡С‚Рѕ РІРµСЃ РёР·РЅР°С‡Р°Р»СЊРЅС‹С… С„Р°Р№Р»РѕРІ СЂР°РІРµРЅ РІРµСЃСѓ РёР·РІР»РµС‡РµРЅРЅС‹С…
+    \param p p=1 СЃРіРµРЅРµСЂРёСЂРѕРІР°С‚СЊ С„Р°Р№Р» СЃ РїСЂРѕРёР·РІРѕР»СЊРЅС‹Рј РёРјРµРЅРµРј Рё РїСЂРѕРёР·РІРѕР»СЊРЅС‹Рј СЃРѕРґРµСЂР¶РёРјС‹Рј
+    \return true РµСЃР»Рё СѓСЃРїРµС…. false РёРЅР°С‡Рµ
+    */
+    template<typename T>
+    std::string toString(T value)
+    {
+        ostringstream oss;
+        oss << value;
+        test_vector.push_back(oss.str());
+        return oss.str() + " ";
+    }
 
-	template< typename ... Args >
-	bool test_3(const Args& ... args) {
-		merge({ toString(args)... });
-		if (sub_test_3() == true) {
-			return true;
-		}
-		else {
-			return false;
-		}
-	}
+    template< typename ... Args >
+    bool test_3(const Args& ... args)
+    {
+        merge({ toString(args)... });
+        if (sub_test_3() == true)
+        {
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
 
 
-	bool test_5(const char* in, const char* out);// файл in сжать и разжать (выходной out) с помощью библиотеки. 
-												 // Сравнить in и out на эквивалентность
-	bool test_7(int q);//проверка TaskQueue. На вход подается длина очереди и задачи архиватора.
-	bool test_8(int w);//проверка ThreadPool. На вход подается число потоков
-	bool test_9(int w, int q);//проверка TaskQueue+ThreadPool на простой функции
-	bool test_10(int w, int q);//проверка TaskQueue+ThreadPool+Archiver
+    bool test_5(const char* in, const char* out);// С„Р°Р№Р» in СЃР¶Р°С‚СЊ Рё СЂР°Р·Р¶Р°С‚СЊ (РІС‹С…РѕРґРЅРѕР№ out) СЃ РїРѕРјРѕС‰СЊСЋ Р±РёР±Р»РёРѕС‚РµРєРё. 
+                                                 // РЎСЂР°РІРЅРёС‚СЊ in Рё out РЅР° СЌРєРІРёРІР°Р»РµРЅС‚РЅРѕСЃС‚СЊ
+    bool test_7(int q);//РїСЂРѕРІРµСЂРєР° TaskQueue. РќР° РІС…РѕРґ РїРѕРґР°РµС‚СЃСЏ РґР»РёРЅР° РѕС‡РµСЂРµРґРё Рё Р·Р°РґР°С‡Рё Р°СЂС…РёРІР°С‚РѕСЂР°.
+    bool test_8(int w);//РїСЂРѕРІРµСЂРєР° ThreadPool. РќР° РІС…РѕРґ РїРѕРґР°РµС‚СЃСЏ С‡РёСЃР»Рѕ РїРѕС‚РѕРєРѕРІ
+    bool test_9(int w, int q);//РїСЂРѕРІРµСЂРєР° TaskQueue+ThreadPool РЅР° РїСЂРѕСЃС‚РѕР№ С„СѓРЅРєС†РёРё
+    bool test_10(int w, int q);//РїСЂРѕРІРµСЂРєР° TaskQueue+ThreadPool+Archiver
 };
 
 /*!
-\param i,in,count- i-фиктивный параметр. Напечатать in count раз. Используется в тесте 9
+\param i,in,count- i-С„РёРєС‚РёРІРЅС‹Р№ РїР°СЂР°РјРµС‚СЂ. РќР°РїРµС‡Р°С‚Р°С‚СЊ in count СЂР°Р·. РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РІ С‚РµСЃС‚Рµ 9
 */
-void write(int i, const char *in, int count);
+void my_write(/*int i, */const char *in, int count);
 
 /*!
-Используется для тестирования тредпула на произвольных функциях
+РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ С‚РµСЃС‚РёСЂРѕРІР°РЅРёСЏ С‚СЂРµРґРїСѓР»Р° РЅР° РїСЂРѕРёР·РІРѕР»СЊРЅС‹С… С„СѓРЅРєС†РёСЏС…
 */
-void void_task(int i, int a, int b, int n, const char *text);
+void void_task(/*int i, */int a, int b, int n, const char *text);
 /*!
-Используется для тестирования тредпула на произвольных функциях
+РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ С‚РµСЃС‚РёСЂРѕРІР°РЅРёСЏ С‚СЂРµРґРїСѓР»Р° РЅР° РїСЂРѕРёР·РІРѕР»СЊРЅС‹С… С„СѓРЅРєС†РёСЏС…
 */
-int int_task(int i, int a, int b);
+int int_task(/*int i, */int a, int b);
 /*!
-Используется для тестирования тредпула на произвольных функциях
+РСЃРїРѕР»СЊР·СѓРµС‚СЃСЏ РґР»СЏ С‚РµСЃС‚РёСЂРѕРІР°РЅРёСЏ С‚СЂРµРґРїСѓР»Р° РЅР° РїСЂРѕРёР·РІРѕР»СЊРЅС‹С… С„СѓРЅРєС†РёСЏС…
 */
-string string_test(int i, const char *str1, const char *str2);
+std::string string_test(/*int i, */const char *str1, const char *str2);
 
 /*!
-Загрузить queue задачами; log-вывод на экран или файл
+Р—Р°РіСЂСѓР·РёС‚СЊ queue Р·Р°РґР°С‡Р°РјРё; log-РІС‹РІРѕРґ РЅР° СЌРєСЂР°РЅ РёР»Рё С„Р°Р№Р»
 */
 void function_block(TaskQueue &queue, int log);
 
 /*!
-Удаление файлов name, in1, in2, in3
+РЈРґР°Р»РµРЅРёРµ С„Р°Р№Р»РѕРІ name, in1, in2, in3
 */
 void removing(const char *name, const char *in1, const char *in2, const char *in3);
 
 /*
-Извлечь файл name
+РР·РІР»РµС‡СЊ С„Р°Р№Р» name
 */
-void extract(int i, int log, const char *name);
+void extract(/*int i, */int log, const char *name);
 
 /*
-Не библиотечное сжатие файлов ... и добавление их в архив name
+РќРµ Р±РёР±Р»РёРѕС‚РµС‡РЅРѕРµ СЃР¶Р°С‚РёРµ С„Р°Р№Р»РѕРІ ... Рё РґРѕР±Р°РІР»РµРЅРёРµ РёС… РІ Р°СЂС…РёРІ name
 */
-void compress_own(int i, int log, const char *name, const char *file1, const char *file_tmp1, const char *file_tmp2, const char *file2);
+void compress_own(/*int i, */int log, const char *name, const char *file1, const char *file_tmp1, const char *file_tmp2, const char *file2);
 
 /*
-Библиотечное сжатие файлов ... и добавление их в архив name
+Р‘РёР±Р»РёРѕС‚РµС‡РЅРѕРµ СЃР¶Р°С‚РёРµ С„Р°Р№Р»РѕРІ ... Рё РґРѕР±Р°РІР»РµРЅРёРµ РёС… РІ Р°СЂС…РёРІ name
 */
-void compress_lib(int i, int log, const char *name, const char *file1, const char *file_tmp1, const char *file_tmp2, const char *file2);
+void compress_lib(/*int i, */int log, const char *name, const char *file1, const char *file_tmp1, const char *file_tmp2, const char *file2);
 
 /*
-Не библиотечное расжатие файлов
+РќРµ Р±РёР±Р»РёРѕС‚РµС‡РЅРѕРµ СЂР°СЃР¶Р°С‚РёРµ С„Р°Р№Р»РѕРІ
 */
 
-void decompress_own(int i, const char *name, const char *file_in1, const char *file_in2, const char *file_out1, const char *file_out2);
-
-/*
-Не библиотечное расжатие файлов
-*/
-void decompress_lib(int i, const char *name, const char *file_in1, const char *file_in2, const char *file_out1, const char *file_out2);
+void decompress_own(/*int i, */const char *name, const char *file_in1, const char *file_in2, const char *file_out1, const char *file_out2);
 
 /*
-Сравнить файлы file1 и file_res1; file2 и file_res2
+РќРµ Р±РёР±Р»РёРѕС‚РµС‡РЅРѕРµ СЂР°СЃР¶Р°С‚РёРµ С„Р°Р№Р»РѕРІ
 */
-void comp(int i, const char *file1, const char *file2, const char *file_res1, const char *file_res2);
+void decompress_lib(/*int i, */const char *name, const char *file_in1, const char *file_in2, const char *file_out1, const char *file_out2);
+
+/*
+РЎСЂР°РІРЅРёС‚СЊ С„Р°Р№Р»С‹ file1 Рё file_res1; file2 Рё file_res2
+*/
+void comp(/*int i, */const char *file1, const char *file2, const char *file_res1, const char *file_res2);
+
+}
+}

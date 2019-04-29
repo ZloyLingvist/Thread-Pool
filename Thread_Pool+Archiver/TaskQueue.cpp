@@ -1,6 +1,9 @@
 #include "TaskQueue.h"
 #include <algorithm>
 
+using namespace std;
+using namespace my;
+
 TaskQueue::TaskQueue(int q,bool verbose){
 	v = verbose;
 	quescap = q;
@@ -9,19 +12,19 @@ TaskQueue::TaskQueue(int q,bool verbose){
 void TaskQueue::add_task(const char *name, int p,task obj){
 	obj.make_task(name, p);
 	task_vector.push_back(obj);
-	std::sort(task_vector.begin(), task_vector.end(), [](task &v1, task &v2) {return v1.task_priority() < v2.task_priority(); });
+	sort(task_vector.begin(), task_vector.end(), [](task &v1, task &v2) {return v1.task_priority() < v2.task_priority(); });
 }
 
-void TaskQueue::push_to_end(std::thread::id this_id) {
+void TaskQueue::push_to_end(thread::id this_id) {
 	bool v = true;
 	sz = function_queue.size();
 	t = function_queue.top();
-	if ((sz + 1) <= quescap) {
-		std::unique_lock<std::mutex> lock_(m_mtx);
+	if ((sz + 1) <= static_cast<size_t>(quescap)) {
+		unique_lock<mutex> lock_(m_mtx);
 		function_queue.push(t);
 			
 		if (v == true){
-			std::cout.width(10);
+			cout.width(10);
 			cout << this_id << " Задача " << t.task_id() << " перемещена в конец " << endl;
 		}
 
@@ -38,7 +41,8 @@ void TaskQueue::push_to_end(std::thread::id this_id) {
 	function_queue.top();
 }
 
-void TaskQueue::print(int mode, std::thread::id this_id) {
+void TaskQueue::print(int mode, thread::id this_id) const
+{
 		if (v == false) {
 			return;
 		}
@@ -59,33 +63,33 @@ void TaskQueue::print(int mode, std::thread::id this_id) {
 		}
 	}
 
-task TaskQueue::give_task() {
+task TaskQueue::give_task() const {
 	function_queue.top();
 	t = function_queue.top();
 	return t;
 }
 
-int TaskQueue::task_id(){
+int TaskQueue::task_id() const {
 	return give_task().task_id();
 }
 
-string TaskQueue::task_name() {
+string TaskQueue::task_name() const {
 	return give_task().task_name();
 }
 
-std::function<void(int id)> *TaskQueue::task_f(){
+function<void()> TaskQueue::task_f() const {
 	return give_task().task_func();
 }
 
-bool TaskQueue::empty(){
+bool TaskQueue::empty() const {
 	bool val1 = function_queue.empty();
 	return val1;
 }
 
 void TaskQueue::push(int k) {
 	sz = function_queue.size();
-	if ((sz + 1) <= quescap){
-		std::unique_lock<std::mutex> lock_(m_mtx);
+	if ((sz + 1) <= static_cast<size_t>(quescap)){
+		unique_lock<mutex> lock_(m_mtx);
 		if (check_task_vector() != true) {
 			t = task_vector.back();
 			function_queue.push(t);
@@ -110,14 +114,14 @@ void TaskQueue::push(int k) {
 }
 
 void TaskQueue::pop() {
-	std::unique_lock<std::mutex> lock_(m_mtx);
+	unique_lock<mutex> lock_(m_mtx);
 	if (size_function_queue()> 0){
 		function_queue.pop();
 	}
 	m_cond.notify_one();
 }
 
-bool TaskQueue::check_task_vector() {
+bool TaskQueue::check_task_vector() const {
 	return task_vector.empty();
 }
 
@@ -125,7 +129,7 @@ int TaskQueue::return_quescap(){
 	return quescap;
 }
 
-size_t TaskQueue::size_function_queue() {
+std::size_t TaskQueue::size_function_queue() const {
 	return function_queue.size();
 }
 
@@ -133,7 +137,7 @@ void TaskQueue::simple_run(){
 	int k = 0;
 	while (check_task_vector() != true) {
 		push(k);
-		(*task_f())(task_id());
+		task_f()(/*task_id()*/);
 		if (v == true){
 			cout.width(10);
 			cout << " Задача " << (k + 1) << " " << task_name() << " выполнена " << endl;
