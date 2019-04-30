@@ -153,11 +153,6 @@ std::string string_test(/*int i, */const char *str1, const char *str2);
 */
 void function_block(TaskQueue &queue, int log);
 
-/*!
-Удаление файлов name, in1, in2, in3
-*/
-void removing(const char *name, const char *in1, const char *in2, const char *in3);
-
 /*
 Извлечь файл name
 */
@@ -187,7 +182,8 @@ void decompress_lib(/*int i, */const char *name, const char *file_in1, const cha
 /*
 Сравнить файлы file1 и file_res1; file2 и file_res2
 */
-void comp(/*int i, */const char *file1, const char *file2, const char *file_res1, const char *file_res2);
+void comp(/*int i, */const char *file1, const char *file2, const char *file_res1, const char *file_res2,int log);
 
+void iteration(int i);
 }
 }

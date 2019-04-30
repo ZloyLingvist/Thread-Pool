@@ -24,21 +24,15 @@ inline bool FileExists(const std::string &Filename)
 class lib_archiver : public Tar
  {
 public:
-    //lib_archiver() = default;
-    //~lib_archiver() = default;
-    int compress(const char* in, const char* out) //override
+    int compress(const char* in, const char* out)
     {
-        //if (FILE *file = fopen(in, "r")) { fclose(file); }
-        //else { return -1; }
         if (!FileExists(in))
             return -1;
         quick_compress(in, out);
         return 0;
     }
-    int decompress(const char* in, const char* out) //override
+    int decompress(const char* in, const char* out) 
     {
-        //if (FILE *file = fopen(in, "r")) { fclose(file); }
-        //else { return -1; }
         if (!FileExists(in))
             return -1;
         quick_decompress(in, out);

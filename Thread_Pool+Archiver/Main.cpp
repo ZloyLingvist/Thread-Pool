@@ -41,7 +41,7 @@ inline int examp(/*int k, */int a, int b)
     return d;
 }
 
-void only_thread_pool(int w, bool v)
+/*void only_thread_pool(int w, bool v)
 {
     try
     {
@@ -56,7 +56,7 @@ void only_thread_pool(int w, bool v)
     {
         cout << "При тестировании произошла ошибка" << endl;
     }
-}
+}*/
 
 void testing_block_1(int log)
 {
@@ -110,21 +110,26 @@ void testing_block_3(int w, int q, int log)
 using namespace my;
 using namespace my::test;
 
+void wro() {
+	cout << "///" << endl;
+}
+
 int main() {
 	setlocale(LC_ALL, "Russian");
 	int w = 2;
-	int q = 3;
+	int q = 1000;
 	bool v = true;
 	int log = 0;
 	
-	only_thread_pool(w,v);
+	//only_thread_pool(w,v);
 
 	/*------------ Тестирование ------------ */
 
-	testing_block_1(log);
-	testing_block_2(w,q,log);
+	//testing_block_1(log);
+	//testing_block_2(w,q,log);
 	testing_block_3(w,q,log);
 
+	
 	system("pause");
 	return 0;
 }

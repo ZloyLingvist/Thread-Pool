@@ -177,9 +177,9 @@ int ownarchiver::decompress(const char* in,const char* out) {
 }
 
 
-size_t ownarchiver::find_dictionary_match(size_t prefix_code, size_t character, dictionary *dict) {
-    size_t index = (character << (BITS - 8)) ^ prefix_code; // x64 !! check it
-    size_t offset = (index == 0) ? 1 : (TABLE_SIZE - index);
+unsigned int ownarchiver::find_dictionary_match(int prefix_code, int character, dictionary *dict) {
+    int index = (character << (BITS - 8)) ^ prefix_code; // x64 !! check it
+    int offset = (index == 0) ? 1 : (TABLE_SIZE - index);
 
 	while (true)
     {

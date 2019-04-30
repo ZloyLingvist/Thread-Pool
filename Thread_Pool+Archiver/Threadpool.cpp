@@ -5,162 +5,132 @@
 using namespace std;
 using namespace my;
 
-extern bool v;
-
-Threadpool::Threadpool(int w, TaskQueue &obj, bool verbose) : lock(), data_condition(), active(true), vector_thread_pool(){
-	workers = w; 
-	for (int i = 0; i < workers; i++) {
-		vector_thread_pool.emplace_back(thread(&Threadpool::work, this, ref(obj)));
-	}
-	
-	run(obj);
+Threadpool::Threadpool(unsigned int workers, int maximim_errors, bool verbose) {
+	waiting_thread = 0;
+	isStop = false;
+	isDone = false;
+	max_errors = maximim_errors;
 	v = verbose;
 }
 
-Threadpool::Threadpool(int w,bool verbose) : lock(), data_condition(), active(true), vector_thread_pool(){
-	workers = w;
-	for (int i = 0; i < workers; i++) {
-		vector_thread_pool.emplace_back(thread(&Threadpool::simple_run, this));
+Threadpool::Threadpool(unsigned int workers, TaskQueue &queue,int maximim_errors,bool verbose){
+	waiting_thread = 0;
+	isStop = false;
+	isDone = false;
+	max_errors = maximim_errors;
+	v=verbose;
+
+	if (!isStop && !isDone) {
+		int old_threads = static_cast<int>(threads.size());
+		if (old_threads <= workers) {
+			threads.resize(workers);
+			flags.resize(workers);
+
+			for (int i = old_threads; i < workers; ++i) {
+				flags[i] = std::make_shared<atomic<bool>>(false);
+				work(queue, i);
+			}
+		}
+		else {
+			for (int i = old_threads - 1; i >= workers; --i) {
+				*flags[i] = true;  //тред освободился
+				threads[i]->detach();
+			}
+			{
+				// останавливаем ждущие треды
+				std::unique_lock<std::mutex> lock(mutex);
+				data_condition.notify_all();
+			}
+
+			threads.resize(workers);
+			flags.resize(workers);
+		}
 	}
-	v = verbose;
 }
 
-Threadpool::~Threadpool() {
-	for (auto &t : vector_thread_pool) {
-		t.join();
-	}
+Threadpool::~Threadpool(){
+	stop(true);
 }
 
-void Threadpool::work(TaskQueue &obj){
-	bool v = true;
-	function<void()> func;
-	task d;
-	int id = 0;
-	int error = 0;
-	string name = "";
-	string error_name="";
-	thread::id this_id = this_thread::get_id();
+int Threadpool::size() {
+	return static_cast<int>(threads.size());
+}
+
+
+void Threadpool::stop(bool isWait = false) {
+	if (!isWait){
+		if (isStop){
+			return;
+		}
+		isStop = true;
+		for (int i = 0, n = size(); i < n; ++i){
+			*flags[i] = true;  //команда треду остановиться
+		}
+	}
+	else {
+		if (isDone || isStop){
+			return;
+		}
+		isDone = true;  
+	}
+	{
+		std::unique_lock<std::mutex> lock(mutex);
+		data_condition.notify_all();  //остановить все ждущие треды
+	}
+	for (int i = 0; i < static_cast<int>(threads.size()); ++i){ 
+		if (threads[i]->joinable()) {
+			threads[i]->join();
+		}
+	}
 	
-	while (true) {
-		{
-			unique_lock<mutex> lock_(lock);
-			data_condition.wait(lock_,[this,&obj](){
-				cout << endl;
-				return !obj.empty() || !active;
-			});
-
-			if (!active && obj.empty()) {
-				obj.print(1, this_id);
-				if (run(obj)==false){
-					if (v == true) {
-						cout << "Задач для " << this_id << " нет" << endl;
-					}
-					return;
-				}
-
-				error = 0;
-				obj.print(4, this_id);
-			}
-
-			name = obj.task_name();
-			if (error < 2 && error_name != name){
-				func = obj.task_f();
-				id = obj.task_id();
-				obj.pop();
-			}
-			else {
-				obj.pop();
-				name = obj.task_name();
-				func = obj.task_f();
-				id = obj.task_id();
-				error = 0;
-			}
-
-			active = false;
-			data_condition.notify_all();
-		}
-
-		try {
-			func();
-			if (v == true) {
-				cout.width(10);
-				cout << this_id << " Задача " << name << " выполнена " << endl;
-			}
-		}
-
-		catch (const exception&) {
-			if (v == true){
-				cout.width(10);
-				cout << this_id << " Вызвано исключение у задачи " << id << endl;
-			}
-			
-			obj.push_to_end(this_id);
-			error_name = name;
-			error = error + 1;
-		}	
-	}
+	threads.clear();
+	flags.clear();
 }
 
-bool Threadpool::run(TaskQueue &obj) {
-	int k = 0;
-	if (obj.check_task_vector() == true) {
-		return false;
-	}
 
-	for (int i = 0; i < (1 + rand() % obj.return_quescap()); i++) {
-		obj.push(k);
-		k = k + 1;
-	}
+void Threadpool::work(TaskQueue &queue, int i) {
+	int current_errors = max_errors;
+	std::shared_ptr<std::atomic<bool>> flag(flags[i]); 
 
-	return true;
-}
-
-void Threadpool::simple_run() {
-	bool v = true;
-	function<void()> func;
-	task d;
-    size_t id = 0;
-	int error = 0;
-	string name = "";
-	string error_name = "";
-	thread::id this_id = this_thread::get_id();
-
-	while (true) {
-		{
-			unique_lock<mutex> lock_(lock);
-			data_condition.wait(lock_, [this_id, this]() {
-				cout << endl;
-				return !myv.empty() || !active;
+	auto f = [this, i, &current_errors, flag, &queue]() {
+		atomic<bool> & flag_stop_thread = *flag;
+		bool is_empty = queue.empty();
+		while (true) {
+			std::unique_lock<std::mutex> lock(this->mutex);
+			++waiting_thread;
+			data_condition.wait(lock, [this,&is_empty, &flag_stop_thread, &queue]() { 
+				is_empty = queue.empty();
+				return is_empty || this->isDone || flag_stop_thread;
 			});
+			--waiting_thread;
 
-			if (!active && myv.empty()) {
-				if (v == true) {
-					cout << "Задач для " << this_id << " нет" << endl;
-				}
+			if (is_empty || current_errors==0){ //либо пуста очередь задач, либо превышен лимит ошибок
 				return;
 			}
 
-			func = myv.back();
-			id = myv.size();
-			if (myv.empty() == false){
-				myv.pop_back();
-			}
-			active = false;
-			data_condition.notify_all();
-		}
+			while (!is_empty) { 
+				try {
+					queue.task_f()();
+					queue.pop();
+					if (v == true){
+						cout.width(10);
+						cout << this_thread::get_id() << " Задача " << queue.task_name() << " выполнена " << endl;
+					}
+				}
+				catch (const exception&){
+					throw runtime_error("Вызвано исключение у задачи "+queue.task_name());
+					--current_errors;
+				}
 
-		try {
-			func();
-			if (v == true) {
-				cout.width(10);
-				cout << this_id << " Задача " << name << " выполнена " << endl;
+				if (flag_stop_thread) {
+					return; 
+				}
+				else {
+					is_empty = queue.empty();
+				}
 			}
 		}
+	};
 
-		catch (const exception&) {
-			cout.width(10);
-			cout << this_id << " Вызвано исключение у задачи " << id << endl;
-		}
-	}
+	threads[i].reset(new thread(f)); 
 }
-

@@ -59,7 +59,7 @@ public:
     /*! процедура поиска в словаре указанной пары (код фразы, символ).
     используеться хеш, получаемый из параметров
     */
-    std::size_t find_dictionary_match(std::size_t prefix_code, std::size_t character, dictionary *dict);
+    unsigned int find_dictionary_match(int prefix_code, int character, dictionary *dict);
 
     /*!
     Декодирование строки. процедура размещает символы в стеке, возвращая их количество

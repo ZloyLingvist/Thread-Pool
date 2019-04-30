@@ -84,7 +84,7 @@ bool Testing_class::test_5(const char* in, const char* out) {
 
 
 bool Testing_class::test_7(int q) {
-	bool v = false;
+	/*bool v = false;
 	TaskQueue queue(q, v);
 	logging("--[TestQueue without ThreadPool]--");
 
@@ -95,12 +95,14 @@ bool Testing_class::test_7(int q) {
 	}
 	catch (const exception&) {
 		return false;
-	}
+	}*/
+
+	return true;
 }
 
 bool Testing_class::test_8(int w) {
 	bool v = false;
-	logging("--[ThreadPool without TestQueue ]--");
+	/*logging("--[ThreadPool without TestQueue ]--");
 	try {
 		Threadpool thread_pool(w,v);
 		auto future1 = thread_pool.add_function(void_task,5,4,40,"stroka");
@@ -110,12 +112,13 @@ bool Testing_class::test_8(int w) {
 	}
 	catch (const exception&) {
 		return false;
-	}
+	}*/
+	return true;
 }
 
 
 bool Testing_class::test_9(int w, int q){
-	logging("--[TaskQueue + Thread_pool(simple)]--");
+	/*logging("--[TaskQueue + Thread_pool(simple)]--");
 	try {
 		task t1, t2, t3,t4;
 		bool v = false;
@@ -137,7 +140,8 @@ bool Testing_class::test_9(int w, int q){
 
 	catch (const exception&) {
 		return false;
-	}
+	}*/
+	return true;
 }
 
 bool Testing_class::test_10(int w,int q){
@@ -146,7 +150,7 @@ bool Testing_class::test_10(int w,int q){
 		bool v = false;
 		TaskQueue queue(q, v);
 		function_block(queue, log_test);
-		Threadpool thread_pool(w, queue, v);
+		Threadpool thread_pool(w, queue,2,v);
 		return true;
 	}
 
@@ -158,7 +162,7 @@ bool Testing_class::test_10(int w,int q){
 void Testing_class::logging(const char *msg) {
 	if (log_test == 0) {
 		ofstream fout_log_test;
-		fout_log_test.open("log_test.txt", ios_base::app);
+		fout_log_test.open("log\\log_test.txt", ios_base::app);
 		fout_log_test << msg << endl;
 		fout_log_test.close();
 	}
@@ -171,14 +175,18 @@ void Testing_class::logging(const char *msg) {
 
 void comp_sub(const char *file1, const char *file_res1,int log) {
 	Testing_class obj(log);
+	string eq("~");
+	string eq2("!~");
 	if (obj.isFilesEqual(file1, file_res1) == true) {
-		cout << file1 << "~" << file_res1 << endl;
+		string my(file1+eq+file_res1);
+		obj.logging(my.c_str());
 	}
 	else {
-		cout << file1 << "not ~" << file_res1 << endl;
+		string my(file1 +eq2 + file_res1);
+		obj.logging(my.c_str());
 	}
 }
-void my::test::comp(/*int i, */const char *file1, const char *file2, const char *file_res1, const char *file_res2) {
-	comp_sub(file1, file_res1,1);
-	comp_sub(file2, file_res2,1);
+void my::test::comp(const char *file1, const char *file2, const char *file_res1, const char *file_res2,int log) {
+	comp_sub(file1, file_res1,log);
+	comp_sub(file2, file_res2,log);
 }

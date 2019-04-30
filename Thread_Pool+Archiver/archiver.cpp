@@ -278,7 +278,7 @@ int tarchiver::extract(const char *tarFileName) {
 void tarchiver::logging(const char *msg) {
 	if (log == 0) {
 		ofstream fout_log;
-		fout_log.open("log.txt", std::ios_base::app);
+		fout_log.open("log\\log.txt", std::ios_base::app);
 		fout_log << msg << endl;
 		fout_log.close();
 	}
