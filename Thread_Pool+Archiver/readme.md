@@ -10,14 +10,40 @@
 ##### Testing_class - тестирующий класс #####
 
 ### getting-started ###
-Пример запуска может быть следующим:
+Пример запуска может быть следующим: <br />
+1. Раздать свою функцию на все треды <br />
 ``` cpp
-task t1;
-bool v = false;//показывать ли подробные сообщения
-TaskQueue queue(q, v); //q- длина очереди задач
-t1.add_function(compress_own,log,"newarch.tar","in1.txt");	
-queue.add_task("Add and Compress (own)",5,t1); //название, приоритет и экземпляр структуры task
-Thread_pool thread_pool(w, queue, v); //w -- число тредов
+Threadpool tp(w,max_error, v);//w - максимальное число потоков. max_error-максимально допустимое число ошибок, bool v отображать ли работу программы на экране <br />
+auto future1=tp.append_function(examp, 1, 2); //подали функцию examp, принимающую два параметра типа int
+```
+2. Запустить тредпул и taskqueue вместе <br />
+``` cpp
+int workers=2 - число потоков
+int q=1 - размер очереди
+task t1; -- создаем задачу
+int max_errors = 2; -- указываем сколько раз может произойти ошибка
+bool v = false; -- решим отображения
+string tn1 = "Task1"; -- имя задачи
+auto future1 = t1.add_task(tn1, 1, my_write,"T1\n", 1); -- задача выполнить функцию my_write с именем tn1, приоритетом 1 и параметрами const char * и int <br />
+TaskQueue queue(q, v); 
+queue.push(t1);//положили задачу в очередь
+Threadpool thread_pool(w, queue,max_errors,v);//запустили тредпул
+```
+
+3. Архиватор <br />
+3.1 Создание архива
+``` cpp
+tarchiver myar(name,"a",log);//будем добавлять файлы в архив name. log (0 || 1) - режим логирования "a|e" - добавить/извлечь
+ownarchiver o_ar; ( lib_archiver l_ar) 
+o_ar.compress(file, file_tmp);//сжимаем файл с именем file и называем его file_tmp
+myar.add_to_archive(file_tmp);//добавили сжатый файл в архив
+myar.close();//закрыли архив
+```
+3.2 Извлечение файлов
+``` cpp
+tarchiver myar2(name,"e",log);//вытаскиваем файлы(сжатые). log (0 || 1) - режим логирования "a|e" - добавить/извлечь
+ownarchiver o_ar; ( lib_archiver l_ar) 
+o_ar.decompress(file_tmp, file_res);//рассжимаем файл с именем file_tmp и называем его file_res
 ```
 
 ### Тестирование ###
@@ -59,18 +85,10 @@ MS Visual Studio 2015 <br />
 Библиотека quicklz http://www.quicklz.com/
 
 ### Недостатки ###
-1. Если линкер не позволит собрать проект, то возможное решение в файле libarch.cpp закомментировать вызов quick_decompress(in, out); and quick_compress(in, out); Собрать проект. Перед следующим вызовом восстановить эти функции
-2. В обязательном порядке у вызываемой функции должен быть фиктивный параметр типа int
-#### Пример ####
-```cpp
-void myfunc(int i,const char *in){
-	cout << in << endl;
-}
-...
-task t1;
-t1.add_function(myfunc, "text");	
+1. При попытке запустить свою функцию на тредпул: может зависнуть. Скомпилировать проект еще раз. Так же возможно, то что отработает меньшее число тредов чем должно было бы
+2. При Release x64 замечен баг, что для получения корректной работы нужно запускать глобальный тест отдельно от остальных
+3. Сильно усложненные для восприятия unit-тесты
 
-```
 ### Необходимые знания ###
 https://en.wikipedia.org/wiki/Tar_(computing) <br />
 https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%D0%9B%D0%B5%D0%BC%D0%BF%D0%B5%D0%BB%D1%8F_%E2%80%94_%D0%97%D0%B8%D0%B2%D0%B0_%E2%80%94_%D0%92%D0%B5%D0%BB%D1%87%D0%B0
@@ -82,4 +100,4 @@ https://ru.wikipedia.org/wiki/%D0%90%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC_%
 Планируется развивать проект и дальше. За найденные замечания буду благодарен
 
 ### Автор ###
-Igor Butuzov April 2019
+Igor Butuzov. April 2019
