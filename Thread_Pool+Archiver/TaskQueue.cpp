@@ -6,7 +6,7 @@ using namespace my;
 
 TaskQueue::TaskQueue(int q, bool verbose) {
 	v = verbose;
-	quescap = q;
+	capacity = q;
 }
 
 
@@ -29,7 +29,7 @@ bool TaskQueue::empty() const {
 
 void TaskQueue::push(task t) {
 	sz = function_queue.size();
-	if ((sz + 1) <= static_cast<size_t>(quescap)) {
+	if ((sz + 1) <= static_cast<size_t>(capacity)) {
 		unique_lock<mutex> lock_(m_mtx);
 		function_queue.push(t);
 		function_queue.top();/// нужно чтобы задачи отсортировались по приоритету
@@ -53,13 +53,14 @@ bool TaskQueue::pop() {
 		function_queue.pop();
 		return true;
 	}
+	return false;
 }
 
 std::size_t TaskQueue::size_function_queue() const {
 	return function_queue.size();
 }
 
-std::size_t TaskQueue::capacity() const {
-	return quescap;
+std::size_t TaskQueue::capacity_() const {
+	return capacity;
 }
 

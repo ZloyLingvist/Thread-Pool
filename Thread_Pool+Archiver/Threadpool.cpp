@@ -11,6 +11,7 @@ Threadpool::Threadpool(unsigned int workers, int maximim_errors, bool verbose) {
 	isDone = false;
 	max_errors = maximim_errors;
 	v = verbose;
+	w = workers;
 }
 
 Threadpool::Threadpool(unsigned int workers, TaskQueue &queue,int maximim_errors,bool verbose){
@@ -33,11 +34,10 @@ Threadpool::Threadpool(unsigned int workers, TaskQueue &queue,int maximim_errors
 		}
 		else {
 			for (int i = old_threads - 1; i >= workers; --i) {
-				*flags[i] = true;  //тред освободился
+				*flags[i] = true;  //этот тред будет завершен
 				threads[i]->detach();
 			}
 			{
-				// останавливаем ждущие треды
 				std::unique_lock<std::mutex> lock(mutex);
 				data_condition.notify_all();
 			}
@@ -50,6 +50,9 @@ Threadpool::Threadpool(unsigned int workers, TaskQueue &queue,int maximim_errors
 
 Threadpool::~Threadpool(){
 	stop(true);
+	for (auto &t : vector_thread_pool){
+		t.join();
+	}
 }
 
 int Threadpool::size() {
@@ -64,7 +67,7 @@ void Threadpool::stop(bool isWait = false) {
 		}
 		isStop = true;
 		for (int i = 0, n = size(); i < n; ++i){
-			*flags[i] = true;  //команда треду остановиться
+			*flags[i] = true;  //команда тредам остановиться
 		}
 	}
 	else {
@@ -133,4 +136,32 @@ void Threadpool::work(TaskQueue &queue, int i) {
 	};
 
 	threads[i].reset(new thread(f)); 
+}
+
+
+void Threadpool::simple_run(std::function<void()> a){
+	int current_errors = max_errors;
+	while (!isDone){
+		{
+			std::unique_lock<std::mutex> lock(mutex);
+			data_condition.wait(lock, [this]() {
+				return !isDone;
+			});
+
+			if (current_errors == 0) {
+				return;
+			}
+
+			isDone = false;
+			data_condition.notify_all();
+		}
+
+		try {
+			a();
+			isDone = true;
+		}
+		catch (const std::exception &){
+			--current_errors;
+		}
+	}
 }

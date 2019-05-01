@@ -16,12 +16,9 @@
 
 namespace my
 {
-	struct task
-	{
-	protected:
-		unsigned int id = 0;
+	struct task {
 	private:
-		unsigned int id_ = id;
+		unsigned int id_ = 0;
 		int priority = 0;
 		std::string name{};
 		bool doing{ false };
@@ -90,7 +87,7 @@ class TaskQueue
 {
 private:
 	std::size_t sz{};
-	int quescap{};
+	int capacity{};
 	std::mutex m_mtx{};
 	bool v = false;
 	std::priority_queue<task> function_queue{};
@@ -139,7 +136,10 @@ public:
 	*/
 	std::string task_name() const;
 
-	std::size_t capacity() const;
+	/*!
+	\return максимальный размер очереди
+	*/
+	std::size_t capacity_() const;
 
 	TaskQueue() = default;
 };
