@@ -18,20 +18,20 @@ auto future1=tp.append_function(examp, 1, 2); //подали функцию exam
 ```
 2. Запустить тредпул и taskqueue вместе <br />
 ``` cpp
-int workers=2 - число потоков
-int q=1 - размер очереди
-task t1; -- создаем задачу
-int max_errors = 2; -- указываем сколько раз может произойти ошибка
-bool v = false; -- решим отображения
-string tn1 = "Task1"; -- имя задачи
-auto future1 = t1.add_task(tn1, 1, my_write,"T1\n", 1); -- задача выполнить функцию my_write с именем tn1, приоритетом 1 и параметрами const char * и int <br />
+int workers=2; //- число потоков
+int q=1; //- размер очереди
+task t1; //-- создаем задачу
+int max_errors = 2;// -- указываем сколько раз может произойти ошибка
+bool v = false; //-- решим отображения
+string tn1 = "Task1"; //-- имя задачи
+auto future1 = t1.add_task(tn1, 1, my_write,"T1\n", 1); //-- задача выполнить функцию my_write с именем tn1, приоритетом 1 и параметрами const char * и int <br />
 TaskQueue queue(q, v); 
-queue.push(t1);//положили задачу в очередь
+queue.push(t1); //положили задачу в очередь
 Threadpool thread_pool(w, queue,max_errors,v);//запустили тредпул
 ```
 
 3. Архиватор <br />
-3.1 Создание архива
+##### 3.1 Создание архива #####
 ``` cpp
 tarchiver myar(name,"a",log);//будем добавлять файлы в архив name. log (0 || 1) - режим логирования "a|e" - добавить/извлечь
 ownarchiver o_ar; ( lib_archiver l_ar) 
@@ -39,7 +39,7 @@ o_ar.compress(file, file_tmp);//сжимаем файл с именем file и 
 myar.add_to_archive(file_tmp);//добавили сжатый файл в архив
 myar.close();//закрыли архив
 ```
-3.2 Извлечение файлов
+##### 3.2 Извлечение файлов #####
 ``` cpp
 tarchiver myar2(name,"e",log);//вытаскиваем файлы(сжатые). log (0 || 1) - режим логирования "a|e" - добавить/извлечь
 ownarchiver o_ar; ( lib_archiver l_ar) 
