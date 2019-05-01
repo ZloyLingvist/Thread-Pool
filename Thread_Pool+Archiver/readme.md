@@ -22,7 +22,7 @@ int workers=2; //- число потоков
 int q=1; //- размер очереди
 task t1; //-- создаем задачу
 int max_errors = 2;// -- указываем сколько раз может произойти ошибка
-bool v = false; //-- решим отображения
+bool v = false; //-- режим отображения
 string tn1 = "Task1"; //-- имя задачи
 auto future1 = t1.add_task(tn1, 1, my_write,"T1\n", 1); //-- задача выполнить функцию my_write с именем tn1, приоритетом 1 и параметрами const char * и int <br />
 TaskQueue queue(q, v); 
